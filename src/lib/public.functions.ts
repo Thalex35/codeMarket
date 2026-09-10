@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/integrations/supabase/types";
+import { normalizeSlug } from "@/lib/catalog";
 
 function publicClient() {
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
@@ -24,11 +25,14 @@ function publicClient() {
 export const getSoftwareMeta = createServerFn({ method: "GET" })
   .inputValidator((input: { slug: string }) => input)
   .handler(async ({ data }) => {
+    const slug = normalizeSlug(data.slug);
+    if (!slug) return null;
+
     const supabase = publicClient();
     const { data: row } = await supabase
       .from("software")
       .select("name, slug, short_description, category, platform, pricing_type, price, currency")
-      .eq("slug", data.slug)
+      .eq("slug", slug)
       .eq("published", true)
       .eq("archived", false)
       .maybeSingle();
