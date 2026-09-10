@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeSocialUrl, normalizeWhatsAppNumber } from "@/lib/url";
 
 export type SiteSettings = Record<string, string>;
 
@@ -23,7 +24,16 @@ export function useSiteSettings() {
       const { data, error } = await supabase.from("site_settings").select("key, value");
       if (error) throw error;
       const map: SiteSettings = { ...DEFAULTS };
-      for (const row of data ?? []) map[row.key] = row.value ?? "";
+      for (const row of data ?? []) {
+        const value = row.value ?? "";
+        if (row.key === "whatsapp_number") {
+          map[row.key] = normalizeWhatsAppNumber(value);
+        } else if (row.key.endsWith("_url")) {
+          map[row.key] = normalizeSocialUrl(value);
+        } else {
+          map[row.key] = value;
+        }
+      }
       return map;
     },
     staleTime: 5 * 60 * 1000,
@@ -33,6 +43,7 @@ export function useSiteSettings() {
 }
 
 export function buildWhatsAppLink(number: string, message: string) {
-  const digits = number.replace(/[^0-9]/g, "");
+  const normalized = normalizeWhatsAppNumber(number);
+  const digits = normalized.replace(/[^0-9]/g, "");
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
