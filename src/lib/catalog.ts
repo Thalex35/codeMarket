@@ -37,13 +37,25 @@ export function formatDate(value: string | null | undefined) {
   return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-export function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
+export function normalizeSlug(value: string | null | undefined): string {
+  if (typeof value !== "string") return "";
+
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return "";
+  if (/\/|\\|:|%|\.\.|^\.+|\.+$/.test(trimmed)) return "";
+
+  const slug = trimmed
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return "";
+  return slug;
+}
+
+export function slugify(value: string) {
+  return normalizeSlug(value);
 }
 
 export type Software = {
