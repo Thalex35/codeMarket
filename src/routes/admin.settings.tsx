@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeSocialUrl, normalizeWhatsAppNumber } from "@/lib/url";
 
 export const Route = createFileRoute("/admin/settings")({
   head: () => ({
@@ -60,9 +61,20 @@ function AdminSettings() {
   async function save() {
     setSaving(true);
     try {
-      const rows = FIELDS.map((field) => ({ key: field.key, value: values[field.key] ?? "" }));
+      const sanitized = { ...values };
+      for (const field of FIELDS) {
+        const value = sanitized[field.key] ?? "";
+        if (field.key === "whatsapp_number") {
+          sanitized[field.key] = normalizeWhatsAppNumber(value);
+        } else if (field.key.endsWith("_url")) {
+          sanitized[field.key] = normalizeSocialUrl(value);
+        }
+      }
+
+      const rows = FIELDS.map((field) => ({ key: field.key, value: sanitized[field.key] ?? "" }));
       const { error } = await supabase.from("site_settings").upsert(rows, { onConflict: "key" });
       if (error) throw error;
+      setValues(sanitized);
       await queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
       await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
       toast.success("Settings saved.");
