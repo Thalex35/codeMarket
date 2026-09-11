@@ -69,7 +69,7 @@ function ProfilePage() {
     }
     setUploading(true);
     try {
-      const extension = file.name.split(".").pop() ?? "png";
+      const extension = (file.name.split(".").pop() ?? "png").toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
       const reference = await uploadFile("avatars", `${user.id}/avatar.${extension}`, file);
       const { error } = await supabase
         .from("profiles")
