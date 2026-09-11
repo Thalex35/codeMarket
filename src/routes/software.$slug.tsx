@@ -36,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import { formatCount, formatDate, formatPrice } from "@/lib/catalog";
 import { getSoftwareMeta } from "@/lib/public.functions";
+import { parseStorageObjectReference } from "@/lib/media";
 
 export const Route = createFileRoute("/software/$slug")({
   loader: ({ params }) => getSoftwareMeta({ data: { slug: params.slug } }),
@@ -210,6 +211,11 @@ function SoftwareDetail() {
       setBuyOpen(true);
       return;
     }
+    const fileReference = parseStorageObjectReference(currentVersion?.file_path);
+    if (currentVersion?.file_path && !fileReference) {
+      toast.error("This download is temporarily unavailable. Please contact support.");
+      return;
+    }
     setBusy(true);
     try {
       const { error } = await supabase.from("downloads").insert({
@@ -221,11 +227,10 @@ function SoftwareDetail() {
       trackEvent("download", { softwareId: software.id, metadata: { version: currentVersion?.version } });
       await queryClient.invalidateQueries({ queryKey: ["software"] });
 
-      if (currentVersion?.file_path) {
-        const [bucket, ...rest] = currentVersion.file_path.split("/");
+      if (fileReference) {
         const { data, error: fileError } = await supabase.storage
-          .from(bucket!)
-          .createSignedUrl(rest.join("/"), 120, { download: true });
+          .from(fileReference.bucket)
+          .createSignedUrl(fileReference.path, 120, { download: true });
         if (fileError || !data?.signedUrl) throw fileError ?? new Error("no url");
         window.location.href = data.signedUrl;
         toast.success("Your download is starting.");

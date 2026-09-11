@@ -3,6 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 const cache = new Map<string, string>();
 const ALLOWED_BUCKETS = new Set(["avatars", "covers", "screenshots", "software-files"]);
 
+export type StorageObjectReference = {
+  bucket: string;
+  path: string;
+};
+
 export function normalizeStorageReference(reference: string | null | undefined): string | null {
   if (!reference) return null;
   if (reference.startsWith("http") || reference.startsWith("/")) return reference;
@@ -21,6 +26,17 @@ export function normalizeStorageReference(reference: string | null | undefined):
   return `${bucket}/${path}`;
 }
 
+export function parseStorageObjectReference(
+  reference: string | null | undefined,
+): StorageObjectReference | null {
+  const normalized = normalizeStorageReference(reference);
+  if (!normalized || normalized.startsWith("http") || normalized.startsWith("/")) return null;
+
+  const [bucket, ...rest] = normalized.split("/");
+  const path = rest.join("/");
+  return bucket && path ? { bucket, path } : null;
+}
+
 /**
  * Image references are stored either as a plain URL (seed/CDN assets) or as a
  * `bucket/path` storage key for admin uploads. Storage buckets are private, so
@@ -32,11 +48,12 @@ export async function resolveImageUrl(reference: string | null | undefined): Pro
   if (normalized.startsWith("http") || normalized.startsWith("/")) return normalized;
   if (cache.has(normalized)) return cache.get(normalized)!;
 
-  const [bucket, ...rest] = normalized.split("/");
-  const path = rest.join("/");
-  if (!bucket || !path) return null;
+  const object = parseStorageObjectReference(normalized);
+  if (!object) return null;
 
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60);
+  const { data, error } = await supabase.storage
+    .from(object.bucket)
+    .createSignedUrl(object.path, 60 * 60);
   if (error || !data?.signedUrl) return null;
   cache.set(normalized, data.signedUrl);
   return data.signedUrl;
