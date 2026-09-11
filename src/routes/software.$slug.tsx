@@ -38,6 +38,7 @@ import { trackEvent } from "@/lib/analytics";
 import { formatCount, formatDate, formatPrice } from "@/lib/catalog";
 import { getSoftwareMeta } from "@/lib/public.functions";
 import { downloadFileWithProgress, fileNameFrom, parseStorageObjectReference } from "@/lib/media";
+import { createOfficialMonCashCheckout } from "@/lib/official-moncash.functions";
 
 export const Route = createFileRoute("/software/$slug")({
   loader: ({ params }) => getSoftwareMeta({ data: { slug: params.slug } }),
@@ -289,8 +290,29 @@ function SoftwareDetail() {
         user!.user_metadata?.["full_name"] ?? user!.email
       }.`;
       window.open(buildWhatsAppLink(number, message), "_blank", "noopener,noreferrer");
+      await startMonCashCheckout(); // Call to the new MonCash checkout function
     } catch {
       toast.error("We couldn't save your request. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function startMonCashCheckout() {
+    if (!requireAuth() || !software) return;
+    setBusy(true);
+    try {
+      const result = await createOfficialMonCashCheckout({ data: { softwareId: software.id } });
+      if (result.alreadyPaid) {
+        await queryClient.invalidateQueries({ queryKey: ["purchase-access", software.id, user!.id] });
+        toast.success("Your purchase is already confirmed.");
+        setBuyOpen(false);
+        return;
+      }
+      if (!result.checkoutUrl) throw new Error("No checkout URL returned");
+      window.location.assign(result.checkoutUrl);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We couldn't start the payment.");
     } finally {
       setBusy(false);
     }
@@ -558,11 +580,15 @@ function SoftwareDetail() {
               {software.name} — {formatPrice(software.price, software.currency)}
             </DialogTitle>
             <DialogDescription>
-              This software is available for purchase. Contact us on WhatsApp to complete your
-              purchase. Your request is saved so we can confirm your payment and unlock the download.
+              Pay securely with MonCash or NatCash through the hosted checkout. WhatsApp remains
+              available as a manual fallback.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:justify-start">
+            <Button disabled={busy} onClick={() => void startMonCashCheckout()}>
+              {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
+              Pay with MonCash / NatCash
+            </Button>
             <Button disabled={busy} onClick={() => void requestPurchase()}>
               {busy ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />

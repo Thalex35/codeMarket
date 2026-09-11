@@ -29,12 +29,14 @@ import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
 import { Route as AdminPurchasesRouteImport } from './routes/admin.purchases'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as PaymentCompleteRouteImport } from './routes/payment.complete'
 import { Route as SoftwareIndexRouteImport } from './routes/software.index'
 import { Route as SoftwareSlugRouteImport } from './routes/software.$slug'
 import { Route as AdminSoftwareIndexRouteImport } from './routes/admin.software.index'
 import { Route as AdminSoftwareNewRouteImport } from './routes/admin.software.new'
 import { Route as AdminSoftwareIdIndexRouteImport } from './routes/admin.software.$id.index'
 import { Route as AdminSoftwareIdVersionsRouteImport } from './routes/admin.software.$id.versions'
+import { Route as ApiPaymentsMoncashNotificationRouteImport } from './routes/api.payments.moncash.notification'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -135,6 +137,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const PaymentCompleteRoute = PaymentCompleteRouteImport.update({
+  id: '/payment/complete',
+  path: '/payment/complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SoftwareIndexRoute = SoftwareIndexRouteImport.update({
   id: '/software/',
   path: '/software/',
@@ -165,6 +172,12 @@ const AdminSoftwareIdVersionsRoute = AdminSoftwareIdVersionsRouteImport.update({
   path: '/software/$id/versions',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiPaymentsMoncashNotificationRoute =
+  ApiPaymentsMoncashNotificationRouteImport.update({
+    id: '/api/payments/moncash/notification',
+    path: '/api/payments/moncash/notification',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -185,12 +198,14 @@ export interface FileRoutesByFullPath {
   '/admin/purchases': typeof AdminPurchasesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/payment/complete': typeof PaymentCompleteRoute
   '/software/$slug': typeof SoftwareSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/software/': typeof SoftwareIndexRoute
   '/admin/software/new': typeof AdminSoftwareNewRoute
   '/admin/software/': typeof AdminSoftwareIndexRoute
   '/admin/software/$id/versions': typeof AdminSoftwareIdVersionsRoute
+  '/api/payments/moncash/notification': typeof ApiPaymentsMoncashNotificationRoute
   '/admin/software/$id/': typeof AdminSoftwareIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -211,12 +226,14 @@ export interface FileRoutesByTo {
   '/admin/purchases': typeof AdminPurchasesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/payment/complete': typeof PaymentCompleteRoute
   '/software/$slug': typeof SoftwareSlugRoute
   '/admin': typeof AdminIndexRoute
   '/software': typeof SoftwareIndexRoute
   '/admin/software/new': typeof AdminSoftwareNewRoute
   '/admin/software': typeof AdminSoftwareIndexRoute
   '/admin/software/$id/versions': typeof AdminSoftwareIdVersionsRoute
+  '/api/payments/moncash/notification': typeof ApiPaymentsMoncashNotificationRoute
   '/admin/software/$id': typeof AdminSoftwareIdIndexRoute
 }
 export interface FileRoutesById {
@@ -240,12 +257,14 @@ export interface FileRoutesById {
   '/admin/purchases': typeof AdminPurchasesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/payment/complete': typeof PaymentCompleteRoute
   '/software/$slug': typeof SoftwareSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/software/': typeof SoftwareIndexRoute
   '/admin/software/new': typeof AdminSoftwareNewRoute
   '/admin/software/': typeof AdminSoftwareIndexRoute
   '/admin/software/$id/versions': typeof AdminSoftwareIdVersionsRoute
+  '/api/payments/moncash/notification': typeof ApiPaymentsMoncashNotificationRoute
   '/admin/software/$id/': typeof AdminSoftwareIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -269,12 +288,14 @@ export interface FileRouteTypes {
     | '/admin/purchases'
     | '/admin/settings'
     | '/admin/users'
+    | '/payment/complete'
     | '/software/$slug'
     | '/admin/'
     | '/software/'
     | '/admin/software/new'
     | '/admin/software/'
     | '/admin/software/$id/versions'
+    | '/api/payments/moncash/notification'
     | '/admin/software/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -295,12 +316,14 @@ export interface FileRouteTypes {
     | '/admin/purchases'
     | '/admin/settings'
     | '/admin/users'
+    | '/payment/complete'
     | '/software/$slug'
     | '/admin'
     | '/software'
     | '/admin/software/new'
     | '/admin/software'
     | '/admin/software/$id/versions'
+    | '/api/payments/moncash/notification'
     | '/admin/software/$id'
   id:
     | '__root__'
@@ -323,12 +346,14 @@ export interface FileRouteTypes {
     | '/admin/purchases'
     | '/admin/settings'
     | '/admin/users'
+    | '/payment/complete'
     | '/software/$slug'
     | '/admin/'
     | '/software/'
     | '/admin/software/new'
     | '/admin/software/'
     | '/admin/software/$id/versions'
+    | '/api/payments/moncash/notification'
     | '/admin/software/$id/'
   fileRoutesById: FileRoutesById
 }
@@ -340,8 +365,10 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  PaymentCompleteRoute: typeof PaymentCompleteRoute
   SoftwareSlugRoute: typeof SoftwareSlugRoute
   SoftwareIndexRoute: typeof SoftwareIndexRoute
+  ApiPaymentsMoncashNotificationRoute: typeof ApiPaymentsMoncashNotificationRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -486,6 +513,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/payment/complete': {
+      id: '/payment/complete'
+      path: '/payment/complete'
+      fullPath: '/payment/complete'
+      preLoaderRoute: typeof PaymentCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/software/': {
       id: '/software/'
       path: '/software'
@@ -527,6 +561,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/software/$id/versions'
       preLoaderRoute: typeof AdminSoftwareIdVersionsRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/api/payments/moncash/notification': {
+      id: '/api/payments/moncash/notification'
+      path: '/api/payments/moncash/notification'
+      fullPath: '/api/payments/moncash/notification'
+      preLoaderRoute: typeof ApiPaymentsMoncashNotificationRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -590,8 +631,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  PaymentCompleteRoute: PaymentCompleteRoute,
   SoftwareSlugRoute: SoftwareSlugRoute,
   SoftwareIndexRoute: SoftwareIndexRoute,
+  ApiPaymentsMoncashNotificationRoute: ApiPaymentsMoncashNotificationRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
