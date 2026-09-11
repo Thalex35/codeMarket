@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeStorageReference } from "@/lib/media";
 import { normalizeSocialUrl, normalizeWhatsAppNumber } from "@/lib/url";
 
 export type SiteSettings = Record<string, string>;
@@ -28,6 +29,8 @@ export function useSiteSettings() {
         const value = row.value ?? "";
         if (row.key === "whatsapp_number") {
           map[row.key] = normalizeWhatsAppNumber(value);
+        } else if (row.key === "logo_url") {
+          map[row.key] = normalizeStorageReference(value) ?? normalizeSocialUrl(value);
         } else if (row.key.endsWith("_url")) {
           map[row.key] = normalizeSocialUrl(value);
         } else {

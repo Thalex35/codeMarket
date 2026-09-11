@@ -61,12 +61,18 @@ export async function resolveImageUrl(reference: string | null | undefined): Pro
 
 export async function uploadFile(bucket: string, path: string, file: File) {
   if (!ALLOWED_BUCKETS.has(bucket)) throw new Error("Invalid storage bucket");
-  if (!path || path.includes("..") || path.startsWith("/")) {
+  const normalizedPath = path.replace(/\\/g, "/").trim();
+  if (
+    !normalizedPath ||
+    normalizedPath.includes("..") ||
+    normalizedPath.startsWith("/") ||
+    normalizedPath.includes("//")
+  ) {
     throw new Error("Invalid storage path");
   }
-  const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+  const { error } = await supabase.storage.from(bucket).upload(normalizedPath, file, { upsert: true });
   if (error) throw error;
-  return `${bucket}/${path}`;
+  return `${bucket}/${normalizedPath}`;
 }
 
 export function fileNameFrom(reference: string | null | undefined) {
