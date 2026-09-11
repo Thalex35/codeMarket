@@ -17,6 +17,7 @@ import { toast } from "sonner";
 
 import { AppImage } from "@/components/AppImage";
 import { EmptyState } from "@/components/EmptyState";
+import { ProgressPanel } from "@/components/ProgressPanel";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import { formatCount, formatDate, formatPrice } from "@/lib/catalog";
 import { getSoftwareMeta } from "@/lib/public.functions";
-import { parseStorageObjectReference } from "@/lib/media";
+import { downloadFileWithProgress, fileNameFrom, parseStorageObjectReference } from "@/lib/media";
 
 export const Route = createFileRoute("/software/$slug")({
   loader: ({ params }) => getSoftwareMeta({ data: { slug: params.slug } }),
@@ -99,6 +100,7 @@ function SoftwareDetail() {
   const [authPrompt, setAuthPrompt] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const [activeShot, setActiveShot] = useState(0);
 
   const currentVersion = versions.find((version) => version.is_current) ?? versions[0] ?? null;
@@ -217,6 +219,8 @@ function SoftwareDetail() {
       return;
     }
     setBusy(true);
+    setDownloadProgress(0);
+    let completed = false;
     try {
       const { error } = await supabase.from("downloads").insert({
         software_id: software.id,
@@ -232,7 +236,12 @@ function SoftwareDetail() {
           .from(fileReference.bucket)
           .createSignedUrl(fileReference.path, 120, { download: true });
         if (fileError || !data?.signedUrl) throw fileError ?? new Error("no url");
-        window.location.href = data.signedUrl;
+        await downloadFileWithProgress(
+          data.signedUrl,
+          fileNameFrom(fileReference.path) || `${software.slug}-download`,
+          setDownloadProgress,
+        );
+        completed = true;
         toast.success("Your download is starting.");
       } else {
         toast.info(
@@ -243,6 +252,11 @@ function SoftwareDetail() {
       toast.error("The download failed. Please try again.");
     } finally {
       setBusy(false);
+      if (completed) {
+        window.setTimeout(() => setDownloadProgress(null), 1200);
+      } else {
+        setDownloadProgress(null);
+      }
     }
   }
 
@@ -293,7 +307,7 @@ function SoftwareDetail() {
               reference={software.cover_url}
               alt={`${software.name} cover image`}
               eager
-              className="aspect-[16/10] w-full object-cover"
+              className="aspect-16/10 w-full object-cover"
             />
           </div>
 
@@ -349,6 +363,18 @@ function SoftwareDetail() {
               </Button>
             </div>
 
+            {downloadProgress !== null ? (
+              <ProgressPanel
+                label="Downloading software"
+                progress={downloadProgress}
+                detail={
+                  downloadProgress >= 100
+                    ? "Transfer complete. Your file is being saved."
+                    : "Your download is transferring securely. Keep this page open until it completes."
+                }
+              />
+            ) : null}
+
             {isPaid && paidAccess?.pending && !paidAccess.paid ? (
               <p className="mt-4 rounded-lg bg-secondary p-3 text-sm text-muted-foreground">
                 Your purchase request is pending confirmation. You'll get download access as soon as
@@ -389,7 +415,7 @@ function SoftwareDetail() {
                 <AppImage
                   reference={screenshots[activeShot]?.image_url}
                   alt={screenshots[activeShot]?.caption ?? `${software.name} screenshot`}
-                  className="aspect-[16/10] w-full object-cover"
+                  className="aspect-16/10 w-full object-cover"
                 />
               </div>
               <div className="mt-3 flex gap-3 overflow-x-auto pb-1">

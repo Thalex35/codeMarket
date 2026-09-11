@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { AppImage } from "@/components/AppImage";
+import { ProgressPanel } from "@/components/ProgressPanel";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { CATEGORIES, PLATFORMS, slugify, type Software } from "@/lib/catalog";
-import { uploadFile } from "@/lib/media";
+import { uploadFileWithProgress } from "@/lib/media";
 
 const MAX_IMAGE = 5 * 1024 * 1024;
 const MAX_INSTALLER = 500 * 1024 * 1024;
@@ -77,6 +78,7 @@ export function SoftwareForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   function parsedRequirements() {
     const map: Record<string, string> = {};
@@ -108,10 +110,16 @@ export function SoftwareForm({
       return;
     }
     setUploading(kind);
+    setUploadProgress(0);
     try {
       const bucket = kind === "cover" ? "covers" : kind === "screenshot" ? "screenshots" : "software-files";
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-      const reference = await uploadFile(bucket, `${form.slug || "draft"}/${Date.now()}-${safeName}`, file);
+      const reference = await uploadFileWithProgress(
+        bucket,
+        `${form.slug || "draft"}/${Date.now()}-${safeName}`,
+        file,
+        setUploadProgress,
+      );
       if (kind === "cover") setForm((prev) => ({ ...prev, cover_url: reference }));
       if (kind === "screenshot") setScreenshots((prev) => [...prev, { image_url: reference, caption: "" }]);
       if (kind === "installer") {
@@ -126,6 +134,7 @@ export function SoftwareForm({
       toast.error("The upload failed. Please try again.");
     } finally {
       setUploading(null);
+      setUploadProgress(null);
       event.target.value = "";
     }
   }
@@ -419,6 +428,13 @@ export function SoftwareForm({
 
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Media</h2>
+        {uploading && uploadProgress !== null ? (
+          <ProgressPanel
+            label={`Uploading ${uploading}`}
+            progress={uploadProgress}
+            detail="Your file is being securely transferred. Keep this page open until it completes."
+          />
+        ) : null}
         <div className="flex flex-wrap items-center gap-4">
           <AppImage reference={form.cover_url} alt="Cover preview" className="h-24 w-36 rounded-md object-cover" />
           <label className="inline-flex">

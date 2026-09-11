@@ -4,13 +4,14 @@ import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppImage } from "@/components/AppImage";
+import { ProgressPanel } from "@/components/ProgressPanel";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { uploadFile } from "@/lib/media";
+import { uploadFileWithProgress } from "@/lib/media";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -30,6 +31,7 @@ function ProfilePage() {
   const [fullName, setFullName] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   useEffect(() => {
     setFullName(profile?.full_name ?? "");
@@ -68,9 +70,15 @@ function ProfilePage() {
       return;
     }
     setUploading(true);
+    setUploadProgress(0);
     try {
       const extension = (file.name.split(".").pop() ?? "png").toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
-      const reference = await uploadFile("avatars", `${user.id}/avatar.${extension}`, file);
+      const reference = await uploadFileWithProgress(
+        "avatars",
+        `${user.id}/avatar.${extension}`,
+        file,
+        setUploadProgress,
+      );
       const { error } = await supabase
         .from("profiles")
         .update({ avatar_url: reference })
@@ -82,6 +90,7 @@ function ProfilePage() {
       toast.error("The upload failed. Please try again.");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
       event.target.value = "";
     }
   }
@@ -111,6 +120,13 @@ function ProfilePage() {
             className="h-20 w-20 rounded-full object-cover"
           />
           <div>
+            {uploading && uploadProgress !== null ? (
+              <ProgressPanel
+                label="Uploading avatar"
+                progress={uploadProgress}
+                detail="Your profile image is being securely transferred."
+              />
+            ) : null}
             <p className="font-medium">{profile?.full_name ?? "CodeMarket user"}</p>
             <p className="text-sm text-muted-foreground">{user?.email}</p>
             <label className="mt-3 inline-flex">

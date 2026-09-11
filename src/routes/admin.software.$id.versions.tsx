@@ -5,6 +5,7 @@ import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
+import { ProgressPanel } from "@/components/ProgressPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate, type SoftwareVersion } from "@/lib/catalog";
-import { uploadFile } from "@/lib/media";
+import { uploadFileWithProgress } from "@/lib/media";
 
 export const Route = createFileRoute("/admin/software/$id/versions")({
   head: () => ({
@@ -32,6 +33,7 @@ function VersionsPage() {
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [form, setForm] = useState({
     version: "",
     release_date: new Date().toISOString().slice(0, 10),
@@ -70,9 +72,15 @@ function VersionsPage() {
       return;
     }
     setUploading(true);
+    setUploadProgress(0);
     try {
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-      const reference = await uploadFile("software-files", `${id}/${Date.now()}-${safeName}`, file);
+      const reference = await uploadFileWithProgress(
+        "software-files",
+        `${id}/${Date.now()}-${safeName}`,
+        file,
+        setUploadProgress,
+      );
       setForm((prev) => ({
         ...prev,
         file_path: reference,
@@ -83,6 +91,7 @@ function VersionsPage() {
       toast.error("The upload failed. Please try again.");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
       event.target.value = "";
     }
   }
@@ -199,6 +208,13 @@ function VersionsPage() {
           />
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          {uploading && uploadProgress !== null ? (
+            <ProgressPanel
+              label="Uploading installer"
+              progress={uploadProgress}
+              detail="Large files can take a moment. Keep this page open until it completes."
+            />
+          ) : null}
           <label className="inline-flex">
             <input type="file" className="hidden" onChange={(event) => void upload(event)} />
             <span className="inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm hover:bg-accent">
