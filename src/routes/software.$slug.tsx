@@ -11,6 +11,8 @@ import {
   MessageCircle,
   Monitor,
   PackageSearch,
+  ShieldCheck,
+  Sparkles,
   Tag,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -574,33 +576,69 @@ function SoftwareDetail() {
       </Dialog>
 
       <Dialog open={buyOpen} onOpenChange={setBuyOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {software.name} — {formatPrice(software.price, software.currency)}
-            </DialogTitle>
-            <DialogDescription>
-              Pay securely with MonCash or NatCash through the hosted checkout. WhatsApp remains
-              available as a manual fallback.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:justify-start">
-            <Button disabled={busy} onClick={() => void startMonCashCheckout()}>
-              {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
-              Pay with MonCash / NatCash
-            </Button>
-            <Button disabled={busy} onClick={() => void requestPurchase()}>
-              {busy ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-              ) : (
-                <MessageCircle className="mr-2 h-4 w-4" aria-hidden />
-              )}
-              Continue on WhatsApp
-            </Button>
-            <Button variant="outline" onClick={() => setBuyOpen(false)}>
+        <DialogContent className="overflow-hidden border-0 bg-card p-0 shadow-2xl sm:max-w-lg">
+          <div className="bg-primary px-6 pb-6 pt-7 text-primary-foreground">
+            <DialogHeader className="space-y-3 text-left">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary-foreground/75">
+                <Sparkles className="h-4 w-4" aria-hidden />
+                Your next favorite tool
+              </div>
+              <DialogTitle className="font-display text-2xl text-primary-foreground">
+                Bring {software.name} home
+              </DialogTitle>
+              <DialogDescription className="max-w-sm text-primary-foreground/75">
+                A simple, secure checkout so you can start using it right away.
+              </DialogDescription>
+              <div className="flex items-baseline gap-2 pt-1">
+                <span className="font-display text-3xl font-bold">
+                  {formatPrice(software.price, software.currency)}
+                </span>
+                <span className="text-sm text-primary-foreground/65">one-time purchase</span>
+              </div>
+            </DialogHeader>
+          </div>
+
+          <div className="space-y-5 px-6 py-6">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Choose your way to pay</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Pick the option that feels easiest for you.
+              </p>
+            </div>
+            <DialogFooter className="flex-col gap-3 sm:flex-col sm:justify-start">
+              <Button
+                className="w-full"
+                disabled={busy}
+                onClick={() => void startMonCashCheckout()}
+              >
+                {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
+                Pay with MonCash / NatCash
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full border-primary/20 bg-primary/5 hover:bg-primary/10"
+                disabled={busy}
+                onClick={() => void requestPurchase()}
+              >
+                {busy ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <MessageCircle className="mr-2 h-4 w-4" aria-hidden />
+                )}
+                Continue on WhatsApp
+              </Button>
+            </DialogFooter>
+            <div className="flex items-start gap-3 rounded-lg border bg-muted/45 px-3.5 py-3 text-xs text-muted-foreground">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
+              <p>
+                MonCash and NatCash open in a secure hosted checkout. WhatsApp is available if you
+                prefer a little personal help.
+              </p>
+            </div>
+            <Button variant="ghost" className="w-full" onClick={() => setBuyOpen(false)}>
               Cancel
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </SiteLayout>
