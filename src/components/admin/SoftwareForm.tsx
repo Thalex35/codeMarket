@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import JSZip from "jszip";
 import { Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -36,6 +37,19 @@ const schema = z.object({
 });
 
 type Screenshot = { id?: string; image_url: string; caption: string };
+type UploadKind = "cover" | "screenshot" | "installer";
+type InstallerSizeInfo = {
+  original: number;
+  prepared: number;
+  compressed: boolean;
+  processing: boolean;
+};
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 export function SoftwareForm({
   initial,
@@ -74,11 +88,22 @@ export function SoftwareForm({
     file_size: "",
     file_path: "",
   });
+  const [compressInstaller, setCompressInstaller] = useState(false);
+    const [installerSize, setInstallerSize] = useState<InstallerSizeInfo | null>(null);
   const [screenshots, setScreenshots] = useState<Screenshot[]>(initialScreenshots);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
-  const [uploading, setUploading] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploading, setUploading] = useState<Record<UploadKind, boolean>>({
+    cover: false,
+    screenshot: false,
+    installer: false,
+  });
+  const [uploadProgress, setUploadProgress] = useState<Record<UploadKind, number | null>>({
+    cover: null,
+    screenshot: null,
+    installer: null,
+  });
+  const uploadControllers = useRef<Partial<Record<UploadKind, AbortController>>>({});
 
   function parsedRequirements() {
     const map: Record<string, string> = {};
@@ -90,10 +115,7 @@ export function SoftwareForm({
     return map;
   }
 
-  async function handleUpload(
-    event: React.ChangeEvent<HTMLInputElement>,
-    kind: "cover" | "screenshot" | "installer",
-  ) {
+  async function handleUpload(event: React.ChangeEvent<HTMLInputElement>, kind: UploadKind) {
     const file = event.target.files?.[0];
     if (!file) return;
     const isImage = kind !== "installer";
@@ -109,16 +131,48 @@ export function SoftwareForm({
       toast.error("Installer files must be smaller than 500 MB.");
       return;
     }
-    setUploading(kind);
-    setUploadProgress(0);
+    if (kind === "installer" && file.name.toLowerCase().endsWith(".lnk")) {
+          if (kind === "installer") {
+            setInstallerSize({ original: file.size, prepared: file.size, compressed: false, processing: compressInstaller });
+          }
+      toast.error("Please upload the actual installer (.exe, .msi, or .zip), not a Windows shortcut.");
+      return;
+    }
+    setUploading((prev) => ({ ...prev, [kind]: true }));
+    setUploadProgress((prev) => ({ ...prev, [kind]: 0 }));
+    const controller = new AbortController();
+    uploadControllers.current[kind] = controller;
     try {
       const bucket = kind === "cover" ? "covers" : kind === "screenshot" ? "screenshots" : "software-files";
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      let fileToUpload = file;
+      if (kind === "installer" && compressInstaller) {
+        const zip = new JSZip();
+        zip.file(file.name, file);
+        const archive = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+        if (archive.size < file.size) {
+          fileToUpload = new File([archive], `${file.name}.zip`, { type: "application/zip" });
+        } else {
+          toast.info("This installer is already compressed; the original file will be uploaded.");
+        }
+        setInstallerSize({
+          original: file.size,
+          prepared: fileToUpload.size,
+          compressed: fileToUpload !== file,
+          processing: false,
+        });
+      } else if (kind === "installer") {
+        setInstallerSize({ original: file.size, prepared: file.size, compressed: false, processing: false });
+      }
+      if (kind === "installer" && fileToUpload.size > MAX_INSTALLER) {
+        throw new Error("The final installer file is larger than the 500 MB limit.");
+      }
+      const safeName = fileToUpload.name.replace(/[^a-zA-Z0-9._-]/g, "-");
       const reference = await uploadFileWithProgress(
         bucket,
         `${form.slug || "draft"}/${Date.now()}-${safeName}`,
-        file,
-        setUploadProgress,
+        fileToUpload,
+        (progress) => setUploadProgress((prev) => ({ ...prev, [kind]: progress })),
+        controller.signal,
       );
       if (kind === "cover") setForm((prev) => ({ ...prev, cover_url: reference }));
       if (kind === "screenshot") setScreenshots((prev) => [...prev, { image_url: reference, caption: "" }]);
@@ -126,17 +180,30 @@ export function SoftwareForm({
         setVersion((prev) => ({
           ...prev,
           file_path: reference,
-          file_size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+          file_size: `${(fileToUpload.size / (1024 * 1024)).toFixed(1)} MB`,
         }));
       }
       toast.success("Upload complete.");
-    } catch {
-      toast.error("The upload failed. Please try again.");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      const rawMessage = error instanceof Error ? error.message : "The upload failed. Please try again.";
+      const lowerMessage = rawMessage.toLowerCase();
+      const message = lowerMessage.includes("maximum allowed size")
+        ? "Supabase is limiting this bucket. Set software-files to 500 MB in Supabase Storage settings, then try again."
+        : lowerMessage.includes("exp claim") || lowerMessage.includes("jwt")
+          ? "Your Supabase session expired. Sign out, sign in again, and retry the upload."
+          : rawMessage;
+      toast.error(message);
     } finally {
-      setUploading(null);
-      setUploadProgress(null);
+      delete uploadControllers.current[kind];
+      setUploading((prev) => ({ ...prev, [kind]: false }));
+      setUploadProgress((prev) => ({ ...prev, [kind]: null }));
       event.target.value = "";
     }
+  }
+
+  function cancelUpload(kind: UploadKind) {
+    uploadControllers.current[kind]?.abort();
   }
 
   async function submit(publish: boolean) {
@@ -408,10 +475,18 @@ export function SoftwareForm({
           </div>
           <div className="space-y-2">
             <Label>Installer file</Label>
+            {uploading.installer && uploadProgress.installer !== null ? (
+              <ProgressPanel
+                label="Uploading installer"
+                progress={uploadProgress.installer}
+                detail="Your installer is being securely transferred."
+                onCancel={() => cancelUpload("installer")}
+              />
+            ) : null}
             <label className="inline-flex">
               <input type="file" className="hidden" onChange={(event) => void handleUpload(event, "installer")} />
               <span className="inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm hover:bg-accent">
-                {uploading === "installer" ? (
+                {uploading.installer ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
                 ) : (
                   <Upload className="mr-2 h-4 w-4" aria-hidden />
@@ -422,17 +497,48 @@ export function SoftwareForm({
             {version.file_path ? (
               <p className="text-xs text-muted-foreground">Uploaded: {version.file_path}</p>
             ) : null}
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Checkbox
+                checked={compressInstaller}
+                onCheckedChange={(checked) => setCompressInstaller(Boolean(checked))}
+              />
+              Compress installer into a ZIP archive before upload
+            </label>
+            {installerSize ? (
+              <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                <p>
+                  Original size: <strong className="text-foreground">{formatFileSize(installerSize.original)}</strong>
+                </p>
+                {installerSize.processing ? (
+                  <p className="mt-1">Calculating compressed size...</p>
+                ) : (
+                  <p className="mt-1">
+                    Upload size: <strong className="text-foreground">{formatFileSize(installerSize.prepared)}</strong>
+                    {installerSize.compressed ? " (ZIP compressed)" : " (original file)"}
+                  </p>
+                )}
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}
 
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Media</h2>
-        {uploading && uploadProgress !== null ? (
+        {uploading.cover && uploadProgress.cover !== null ? (
           <ProgressPanel
-            label={`Uploading ${uploading}`}
-            progress={uploadProgress}
-            detail="Your file is being securely transferred. Keep this page open until it completes."
+            label="Uploading cover"
+            progress={uploadProgress.cover}
+            detail="Your cover image is being securely transferred."
+            onCancel={() => cancelUpload("cover")}
+          />
+        ) : null}
+        {uploading.screenshot && uploadProgress.screenshot !== null ? (
+          <ProgressPanel
+            label="Uploading screenshot"
+            progress={uploadProgress.screenshot}
+            detail="Your screenshot is being securely transferred."
+            onCancel={() => cancelUpload("screenshot")}
           />
         ) : null}
         <div className="flex flex-wrap items-center gap-4">
@@ -440,7 +546,7 @@ export function SoftwareForm({
           <label className="inline-flex">
             <input type="file" accept="image/*" className="hidden" onChange={(event) => void handleUpload(event, "cover")} />
             <span className="inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm hover:bg-accent">
-              {uploading === "cover" ? (
+              {uploading.cover ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
               ) : (
                 <Upload className="mr-2 h-4 w-4" aria-hidden />
@@ -483,7 +589,7 @@ export function SoftwareForm({
                 onChange={(event) => void handleUpload(event, "screenshot")}
               />
               <span className="flex h-20 w-32 cursor-pointer items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground hover:bg-accent">
-                {uploading === "screenshot" ? (
+                {uploading.screenshot ? (
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 ) : (
                   "Add"
