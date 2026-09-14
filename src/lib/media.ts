@@ -82,6 +82,7 @@ export async function uploadFileWithProgress(
   path: string,
   file: File,
   onProgress: ProgressCallback,
+  signal?: AbortSignal,
 ) {
   if (!ALLOWED_BUCKETS.has(bucket)) throw new Error("Invalid storage bucket");
   const normalizedPath = path.replace(/\\/g, "/").trim();
@@ -94,7 +95,7 @@ export async function uploadFileWithProgress(
     throw new Error("Invalid storage path");
   }
 
-  const { data, error: sessionError } = await supabase.auth.getSession();
+  const { data, error: sessionError } = await supabase.auth.refreshSession();
   const accessToken = data.session?.access_token;
   if (sessionError || !accessToken) throw sessionError ?? new Error("You must be signed in to upload files");
 
@@ -112,18 +113,33 @@ export async function uploadFileWithProgress(
     request.upload.onprogress = (event) => {
       if (event.lengthComputable) onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
     };
+    const abortUpload = () => request.abort();
+    signal?.addEventListener("abort", abortUpload, { once: true });
     request.onerror = () => reject(new Error("The upload request failed"));
+    request.onabort = () => reject(new DOMException("Upload cancelled", "AbortError"));
     request.onload = () => {
+      signal?.removeEventListener("abort", abortUpload);
       if (request.status >= 200 && request.status < 300) {
         onProgress(100);
         resolve(`${bucket}/${normalizedPath}`);
         return;
       }
       try {
-        const body = JSON.parse(request.responseText) as { message?: string; error?: string };
-        reject(new Error(body.message ?? body.error ?? "The upload failed"));
+        const body = JSON.parse(request.responseText) as {
+          message?: string;
+          error?: string;
+          statusCode?: string | number;
+        };
+        const detail = body.message ?? body.error;
+        reject(
+          new Error(
+            detail
+              ? `Upload failed (${request.status}): ${detail}`
+              : `Upload failed with HTTP ${request.status}`,
+          ),
+        );
       } catch {
-        reject(new Error("The upload failed"));
+        reject(new Error(`Upload failed with HTTP ${request.status}`));
       }
     };
     request.send(file);
