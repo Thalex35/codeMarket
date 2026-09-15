@@ -15,6 +15,7 @@ import { Download, Heart, Mail, Package, ShoppingBag, Timer, Users } from "lucid
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { formatDate } from "@/lib/catalog";
 
 export const Route = createFileRoute("/admin/dashboard")({
@@ -44,6 +45,7 @@ async function countOf(table: "profiles" | "software" | "downloads" | "likes" | 
 
 function AdminDashboard() {
   const [days, setDays] = useState(30);
+  const { onlineUserIds } = useAuth();
 
   const { data: kpis, isLoading } = useQuery({
     queryKey: ["admin-kpis"],
@@ -139,14 +141,31 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Welcome back 👋</h1>
-        <p className="text-muted-foreground">Here's how CodeMarket is doing.</p>
+      <div className="hero-surface relative overflow-hidden rounded-3xl p-6 shadow-[var(--shadow-lift)] sm:p-8">
+        <div className="relative z-10 max-w-2xl">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary-foreground/65">
+            Command center
+          </p>
+          <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            Welcome back
+          </h1>
+          <p className="mt-2 max-w-lg text-sm text-primary-foreground/70 sm:text-base">
+            A live view of your marketplace, its people, and the work moving through it.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-2 font-semibold text-primary-foreground">
+              <span className="h-2 w-2 rounded-full bg-success" />
+              {onlineUserIds.length} users online now
+            </span>
+            <span className="text-primary-foreground/55">Realtime presence active</span>
+          </div>
+        </div>
+        <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full border border-primary-foreground/10 bg-primary-foreground/5" />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
-          <div key={card.label} className="rounded-xl border bg-card p-4">
+          <div key={card.label} className="card-elevated rounded-2xl border bg-card p-5">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">{card.label}</p>
               <card.icon className="h-4 w-4 text-primary" aria-hidden />

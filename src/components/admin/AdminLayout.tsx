@@ -14,12 +14,14 @@ import {
   Settings,
   ShoppingBag,
   Users,
+  Wifi,
 } from "lucide-react";
 
 import { Logo } from "@/components/site/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
 const GROUPS = [
@@ -62,10 +64,10 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
-    <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
+    <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-6">
       {GROUPS.map((group) => (
         <div key={group.label}>
-          <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/45">
             {group.label}
           </p>
           <ul className="space-y-1">
@@ -81,10 +83,10 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                     to={item.to}
                     onClick={onNavigate}
                     className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                      "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                       active
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/20"
+                        : "text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                     )}
                   >
                     <item.icon className="h-4 w-4" aria-hidden />
@@ -104,6 +106,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const { onlineUserIds } = useAuth();
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -113,14 +116,28 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-muted/40">
-      <aside className="hidden w-64 shrink-0 flex-col border-r bg-card lg:flex">
-        <div className="flex h-16 items-center border-b px-5">
+    <div className="admin-shell flex min-h-screen w-full bg-muted/40">
+      <aside className="admin-sidebar hidden w-72 shrink-0 flex-col border-r lg:flex">
+        <div className="flex h-20 items-center border-b border-sidebar-border px-6">
           <Logo />
         </div>
+        <div className="mx-4 mt-5 rounded-2xl border border-sidebar-border bg-sidebar-accent/60 p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-sidebar-foreground/70">
+            <span className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_4px_oklch(0.63_0.14_155_/_0.14)]" />
+            Live operations
+          </div>
+          <p className="mt-2 font-display text-2xl font-semibold text-sidebar-foreground">
+            {onlineUserIds.length}
+          </p>
+          <p className="text-xs text-sidebar-foreground/50">users online now</p>
+        </div>
         <NavLinks />
-        <div className="border-t p-3">
-          <Button variant="ghost" className="w-full justify-start" onClick={() => void signOut()}>
+        <div className="border-t border-sidebar-border p-4">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            onClick={() => void signOut()}
+          >
             <LogOut className="mr-2 h-4 w-4" aria-hidden />
             Logout
           </Button>
@@ -156,7 +173,19 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           <Logo />
         </header>
 
-        <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
+        <header className="hidden h-20 items-center justify-between border-b bg-card/80 px-8 backdrop-blur lg:flex">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+              Control center
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Run CodeMarket with clarity.</p>
+          </div>
+          <div className="flex items-center gap-2 rounded-full border bg-background px-3 py-2 text-xs font-semibold text-muted-foreground">
+            <Wifi className="h-3.5 w-3.5 text-success" aria-hidden />
+            Realtime connected
+          </div>
+        </header>
+        <main className="admin-content min-w-0 flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

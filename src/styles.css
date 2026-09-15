@@ -196,3 +196,23 @@
   box-shadow: var(--shadow-lift);
   transform: translateY(-2px);
 }
+
+@utility admin-shell {
+  background-image:
+    radial-gradient(circle at 84% 0%, oklch(0.56 0.21 262 / 0.08), transparent 28rem),
+    linear-gradient(135deg, oklch(0.99 0.003 250), oklch(0.965 0.012 250));
+}
+
+@utility admin-sidebar {
+  background:
+    radial-gradient(circle at 10% 0%, oklch(0.56 0.21 262 / 0.2), transparent 18rem),
+    var(--color-sidebar);
+}
+
+@utility admin-content {
+  background-image: radial-gradient(
+    circle at 100% 0%,
+    oklch(0.7 0.19 45 / 0.06),
+    transparent 24rem
+  );
+}

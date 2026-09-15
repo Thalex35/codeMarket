@@ -19,6 +19,7 @@ type AuthContextValue = {
   isAdmin: boolean;
   isActive: boolean;
   loading: boolean;
+  onlineUserIds: string[];
   refreshProfile: () => Promise<void>;
 };
 
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextValue>({
   isAdmin: false,
   isActive: false,
   loading: true,
+  onlineUserIds: [],
   refreshProfile: async () => {},
 });
 
@@ -38,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
 
   async function loadAccount(userId: string | undefined) {
     if (!userId) {
@@ -87,6 +90,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    const userId = session?.user.id;
+    if (!userId) {
+      setOnlineUserIds([]);
+      return;
+    }
+
+    const channel = supabase.channel("codemarket-presence", {
+      config: { presence: { key: userId } },
+    });
+
+    const syncPresence = () => {
+      setOnlineUserIds(Object.keys(channel.presenceState()));
+    };
+
+    channel.on("presence", { event: "sync" }, syncPresence);
+    channel.on("presence", { event: "join" }, syncPresence);
+    channel.on("presence", { event: "leave" }, syncPresence);
+    void channel.subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        await channel.track({ user_id: userId });
+        syncPresence();
+      }
+    });
+
+    return () => {
+      setOnlineUserIds([]);
+      void supabase.removeChannel(channel);
+    };
+  }, [session?.user.id]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
@@ -95,9 +129,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin,
       isActive,
       loading,
+      onlineUserIds,
       refreshProfile: () => loadAccount(session?.user.id),
     }),
-    [session, profile, isAdmin, isActive, loading],
+    [session, profile, isAdmin, isActive, loading, onlineUserIds],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
