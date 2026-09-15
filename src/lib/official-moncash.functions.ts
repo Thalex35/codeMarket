@@ -74,7 +74,7 @@ async function getAccessToken(config: OfficialConfig) {
 }
 
 export const createOfficialMonCashCheckout = createServerFn({ method: "POST" })
-  .inputValidator((input: { softwareId: string }) => input)
+  .validator((input: { softwareId: string }) => input)
   .handler(async ({ data }) => {
     if (!/^[0-9a-f-]{36}$/i.test(data.softwareId)) throw new Error("Invalid software");
 

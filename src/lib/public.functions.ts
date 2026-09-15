@@ -23,7 +23,7 @@ function publicClient() {
 }
 
 export const getSoftwareMeta = createServerFn({ method: "GET" })
-  .inputValidator((input: { slug: string }) => input)
+  .validator((input: { slug: string }) => input)
   .handler(async ({ data }) => {
     const slug = normalizeSlug(data.slug);
     if (!slug) return null;
