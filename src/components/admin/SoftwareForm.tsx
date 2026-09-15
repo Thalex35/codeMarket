@@ -44,6 +44,7 @@ type InstallerSizeInfo = {
   compressed: boolean;
   processing: boolean;
 };
+type UploadedFileInfo = { name: string; size: number };
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -89,7 +90,8 @@ export function SoftwareForm({
     file_path: "",
   });
   const [compressInstaller, setCompressInstaller] = useState(false);
-    const [installerSize, setInstallerSize] = useState<InstallerSizeInfo | null>(null);
+  const [installerSize, setInstallerSize] = useState<InstallerSizeInfo | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<Partial<Record<UploadKind, UploadedFileInfo>>>({});
   const [screenshots, setScreenshots] = useState<Screenshot[]>(initialScreenshots);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -132,12 +134,10 @@ export function SoftwareForm({
       return;
     }
     if (kind === "installer" && file.name.toLowerCase().endsWith(".lnk")) {
-          if (kind === "installer") {
-            setInstallerSize({ original: file.size, prepared: file.size, compressed: false, processing: compressInstaller });
-          }
       toast.error("Please upload the actual installer (.exe, .msi, or .zip), not a Windows shortcut.");
       return;
     }
+    setUploadedFiles((prev) => ({ ...prev, [kind]: undefined }));
     setUploading((prev) => ({ ...prev, [kind]: true }));
     setUploadProgress((prev) => ({ ...prev, [kind]: 0 }));
     const controller = new AbortController();
@@ -183,6 +183,10 @@ export function SoftwareForm({
           file_size: `${(fileToUpload.size / (1024 * 1024)).toFixed(1)} MB`,
         }));
       }
+      setUploadedFiles((prev) => ({
+        ...prev,
+        [kind]: { name: fileToUpload.name, size: fileToUpload.size },
+      }));
       toast.success("Upload complete.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
@@ -497,6 +501,11 @@ export function SoftwareForm({
             {version.file_path ? (
               <p className="text-xs text-muted-foreground">Uploaded: {version.file_path}</p>
             ) : null}
+            {uploadedFiles.installer ? (
+              <p className="text-sm font-medium text-emerald-700">
+                Upload complete: {uploadedFiles.installer.name} ({formatFileSize(uploadedFiles.installer.size)})
+              </p>
+            ) : null}
             <label className="flex items-center gap-2 text-sm text-muted-foreground">
               <Checkbox
                 checked={compressInstaller}
@@ -554,6 +563,11 @@ export function SoftwareForm({
               Upload cover image
             </span>
           </label>
+          {uploadedFiles.cover ? (
+            <p className="w-full text-sm font-medium text-emerald-700">
+              Cover uploaded: {uploadedFiles.cover.name} ({formatFileSize(uploadedFiles.cover.size)})
+            </p>
+          ) : null}
         </div>
 
         <div>
@@ -596,6 +610,11 @@ export function SoftwareForm({
                 )}
               </span>
             </label>
+            {uploadedFiles.screenshot ? (
+              <p className="mt-3 text-sm font-medium text-emerald-700">
+                Screenshot uploaded: {uploadedFiles.screenshot.name} ({formatFileSize(uploadedFiles.screenshot.size)})
+              </p>
+            ) : null}
           </div>
         </div>
       </section>
