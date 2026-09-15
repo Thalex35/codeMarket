@@ -66,11 +66,20 @@ export const Route = createFileRoute("/api/software/download")({
         }
 
         const remoteUrl = new URL(version.file_path);
-        if (remoteUrl.hostname !== "github.com") {
-          return new Response("Unsupported download host", { status: 400 });
+        if (
+          remoteUrl.hostname !== "github.com" ||
+          !remoteUrl.pathname.includes("/releases/download/")
+        ) {
+          return new Response(
+            "Invalid GitHub asset URL. Use the direct /releases/download/... installer link.",
+            { status: 400 },
+          );
         }
         const upstream = await fetch(remoteUrl, { redirect: "follow" });
         if (!upstream.ok || !upstream.body) return new Response("Download unavailable", { status: 502 });
+        if ((upstream.headers.get("content-type") ?? "").includes("text/html")) {
+          return new Response("The GitHub URL points to a page, not an installer file.", { status: 502 });
+        }
 
         const headers = new Headers();
         headers.set("Content-Type", upstream.headers.get("content-type") ?? "application/octet-stream");
