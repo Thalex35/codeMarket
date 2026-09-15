@@ -100,8 +100,16 @@ function AdminDashboard() {
     queryKey: ["admin-rankings"],
     queryFn: async () => {
       const [{ data: byDownloads }, { data: byLikes }] = await Promise.all([
-        supabase.from("software").select("id, name, download_count").order("download_count", { ascending: false }).limit(5),
-        supabase.from("software").select("id, name, like_count").order("like_count", { ascending: false }).limit(5),
+        supabase
+          .from("software")
+          .select("id, name, download_count")
+          .order("download_count", { ascending: false })
+          .limit(5),
+        supabase
+          .from("software")
+          .select("id, name, like_count")
+          .order("like_count", { ascending: false })
+          .limit(5),
       ]);
       return { byDownloads: byDownloads ?? [], byLikes: byLikes ?? [] };
     },
@@ -174,7 +182,13 @@ function AdminDashboard() {
               <AreaChart data={chart}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={12} />
-                <YAxis allowDecimals={false} tickLine={false} axisLine={false} fontSize={12} width={30} />
+                <YAxis
+                  allowDecimals={false}
+                  tickLine={false}
+                  axisLine={false}
+                  fontSize={12}
+                  width={30}
+                />
                 <Tooltip />
                 <Area
                   type="monotone"

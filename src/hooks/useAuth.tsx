@@ -42,7 +42,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     const [{ data: profileRow }, { data: adminFlag }] = await Promise.all([
-      supabase.from("profiles").select("id, full_name, email, avatar_url, status").eq("id", userId).maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url, status")
+        .eq("id", userId)
+        .maybeSingle(),
       supabase.rpc("is_admin"),
     ]);
     setProfile((profileRow as Profile) ?? null);

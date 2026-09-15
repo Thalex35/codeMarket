@@ -16,7 +16,10 @@ export const Route = createFileRoute("/admin/settings")({
   head: () => ({
     meta: [
       { title: "Settings — CodeMarket admin" },
-      { name: "description", content: "Configure CodeMarket branding, contact details and currency." },
+      {
+        name: "description",
+        content: "Configure CodeMarket branding, contact details and currency.",
+      },
       { property: "og:title", content: "Settings — CodeMarket admin" },
       { property: "og:description", content: "Configure CodeMarket branding and contact details." },
       { name: "robots", content: "noindex" },
@@ -30,7 +33,11 @@ const FIELDS: { key: string; label: string; hint?: string; multiline?: boolean }
   { key: "site_description", label: "Site description", multiline: true },
   { key: "logo_url", label: "Logo URL" },
   { key: "contact_email", label: "Contact email" },
-  { key: "whatsapp_number", label: "WhatsApp number", hint: "Used for paid software purchases, e.g. +254712345678" },
+  {
+    key: "whatsapp_number",
+    label: "WhatsApp number",
+    hint: "Used for paid software purchases, e.g. +254712345678",
+  },
   { key: "currency", label: "Default currency" },
   { key: "facebook_url", label: "Facebook link" },
   { key: "twitter_url", label: "X / Twitter link" },
@@ -103,13 +110,17 @@ function AdminSettings() {
                 id={field.key}
                 rows={3}
                 value={values[field.key] ?? ""}
-                onChange={(event) => setValues((prev) => ({ ...prev, [field.key]: event.target.value }))}
+                onChange={(event) =>
+                  setValues((prev) => ({ ...prev, [field.key]: event.target.value }))
+                }
               />
             ) : (
               <Input
                 id={field.key}
                 value={values[field.key] ?? ""}
-                onChange={(event) => setValues((prev) => ({ ...prev, [field.key]: event.target.value }))}
+                onChange={(event) =>
+                  setValues((prev) => ({ ...prev, [field.key]: event.target.value }))
+                }
               />
             )}
             {field.hint ? <p className="text-xs text-muted-foreground">{field.hint}</p> : null}

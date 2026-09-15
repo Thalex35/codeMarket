@@ -17,7 +17,10 @@ export const Route = createFileRoute("/_authenticated/purchases")({
       { title: "My purchases — CodeMarket" },
       { name: "description", content: "Your CodeMarket purchase requests and their status." },
       { property: "og:title", content: "My purchases — CodeMarket" },
-      { property: "og:description", content: "Your CodeMarket purchase requests and their status." },
+      {
+        property: "og:description",
+        content: "Your CodeMarket purchase requests and their status.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -39,7 +42,9 @@ function PurchasesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("purchases")
-        .select("id, amount, currency, status, payment_method, created_at, software:software_id (name, slug)")
+        .select(
+          "id, amount, currency, status, payment_method, created_at, software:software_id (name, slug)",
+        )
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -73,12 +78,15 @@ function PurchasesPage() {
             data.map((row) => {
               const software = row.software as { name: string; slug: string } | null;
               return (
-                <div key={row.id} className="flex flex-wrap items-center gap-4 rounded-xl border bg-card p-5">
+                <div
+                  key={row.id}
+                  className="flex flex-wrap items-center gap-4 rounded-xl border bg-card p-5"
+                >
                   <div className="min-w-40 flex-1">
                     <p className="font-medium">{software?.name ?? "Software"}</p>
                     <p className="text-sm text-muted-foreground">
-                      {formatPrice(Number(row.amount), row.currency)} · {formatDate(row.created_at)} ·{" "}
-                      {row.payment_method}
+                      {formatPrice(Number(row.amount), row.currency)} · {formatDate(row.created_at)}{" "}
+                      · {row.payment_method}
                     </p>
                   </div>
                   <Badge variant={STATUS_VARIANT[row.status] ?? "secondary"} className="capitalize">

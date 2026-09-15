@@ -32,7 +32,10 @@ export const Route = createFileRoute("/auth")({
           "Sign in to download software, keep your library and follow new releases on CodeMarket.",
       },
       { property: "og:title", content: "Sign in to CodeMarket" },
-      { property: "og:description", content: "Create a free CodeMarket account to download software." },
+      {
+        property: "og:description",
+        content: "Create a free CodeMarket account to download software.",
+      },
     ],
   }),
   component: AuthPage,
@@ -226,7 +229,13 @@ function AuthPage() {
                   {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
                   Sign in
                 </Button>
-                <Button type="button" variant="outline" className="w-full" onClick={() => void handleGoogle()} disabled={busy}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => void handleGoogle()}
+                  disabled={busy}
+                >
                   Continue with Google
                 </Button>
                 <button
@@ -240,7 +249,11 @@ function AuthPage() {
             </TabsContent>
 
             <TabsContent value="signup">
-              <form onSubmit={handleSignup} className="mt-4 space-y-4 rounded-xl border bg-card p-6" noValidate>
+              <form
+                onSubmit={handleSignup}
+                className="mt-4 space-y-4 rounded-xl border bg-card p-6"
+                noValidate
+              >
                 <h1 className="font-display text-xl font-semibold">Create your account</h1>
                 <div className="space-y-2">
                   <Label htmlFor="full-name">Full name</Label>
@@ -261,7 +274,9 @@ function AuthPage() {
                     value={signup.email}
                     onChange={(event) => setSignup({ ...signup, email: event.target.value })}
                   />
-                  {errors["email"] ? <p className="text-xs text-destructive">{errors["email"]}</p> : null}
+                  {errors["email"] ? (
+                    <p className="text-xs text-destructive">{errors["email"]}</p>
+                  ) : null}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
@@ -291,7 +306,13 @@ function AuthPage() {
                   {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
                   Create account
                 </Button>
-                <Button type="button" variant="outline" className="w-full" onClick={() => void handleGoogle()} disabled={busy}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => void handleGoogle()}
+                  disabled={busy}
+                >
                   Continue with Google
                 </Button>
               </form>

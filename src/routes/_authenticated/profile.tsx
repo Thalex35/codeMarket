@@ -72,7 +72,8 @@ function ProfilePage() {
     setUploading(true);
     setUploadProgress(0);
     try {
-      const extension = (file.name.split(".").pop() ?? "png").toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+      const extension =
+        (file.name.split(".").pop() ?? "png").toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
       const reference = await uploadFileWithProgress(
         "avatars",
         `${user.id}/avatar.${extension}`,
@@ -146,7 +147,11 @@ function ProfilePage() {
         <form onSubmit={save} className="mt-6 space-y-4 rounded-xl border bg-card p-6">
           <div className="space-y-2">
             <Label htmlFor="name">Full name</Label>
-            <Input id="name" value={fullName} onChange={(event) => setFullName(event.target.value)} />
+            <Input
+              id="name"
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>

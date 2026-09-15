@@ -7,15 +7,14 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/payment/complete")({
   validateSearch: (search: Record<string, unknown>) => ({
     status:
-      search["status"] === "success" || search["status"] === "failed" || search["status"] === "invalid"
+      search["status"] === "success" ||
+      search["status"] === "failed" ||
+      search["status"] === "invalid"
         ? search["status"]
         : "pending",
   }),
   head: () => ({
-    meta: [
-      { title: "Payment status — CodeMarket" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "Payment status — CodeMarket" }, { name: "robots", content: "noindex" }],
   }),
   component: PaymentComplete,
 });
@@ -44,7 +43,8 @@ function PaymentComplete() {
     pending: {
       icon: Clock3,
       title: "Payment processing",
-      description: "Your payment is being verified. Check your purchases shortly for the updated status.",
+      description:
+        "Your payment is being verified. Check your purchases shortly for the updated status.",
       tone: "text-primary",
     },
   }[status];

@@ -170,7 +170,13 @@ function Home() {
                 <Link
                   key={tile.name}
                   to="/software"
-                  search={{ category: tile.name, q: undefined, platform: undefined, pricing: undefined, sort: undefined }}
+                  search={{
+                    category: tile.name,
+                    q: undefined,
+                    platform: undefined,
+                    pricing: undefined,
+                    sort: undefined,
+                  }}
                   className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/85 transition-colors hover:bg-white/10"
                 >
                   <tile.icon className="h-5 w-5" aria-hidden />
@@ -214,7 +220,13 @@ function Home() {
               <Link
                 key={tile.name}
                 to="/software"
-                search={{ category: tile.name, q: undefined, platform: undefined, pricing: undefined, sort: undefined }}
+                search={{
+                  category: tile.name,
+                  q: undefined,
+                  platform: undefined,
+                  pricing: undefined,
+                  sort: undefined,
+                }}
                 className="flex flex-col items-center gap-2 rounded-xl border bg-background px-3 py-5 text-center text-sm font-medium transition-colors hover:border-primary hover:text-primary"
               >
                 <tile.icon className="h-5 w-5" aria-hidden />
@@ -277,8 +289,8 @@ function Home() {
               Ready to find your next tool?
             </h2>
             <p className="mt-2 max-w-xl text-white/75">
-              Create a free account to download software, keep a library of your tools and follow new
-              releases.
+              Create a free account to download software, keep a library of your tools and follow
+              new releases.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

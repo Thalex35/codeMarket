@@ -19,7 +19,10 @@ export const Route = createFileRoute("/admin/software/$id/versions")({
   head: () => ({
     meta: [
       { title: "Manage versions — CodeMarket admin" },
-      { name: "description", content: "Publish new releases and installers for a CodeMarket application." },
+      {
+        name: "description",
+        content: "Publish new releases and installers for a CodeMarket application.",
+      },
       { property: "og:title", content: "Manage versions — CodeMarket admin" },
       { property: "og:description", content: "Publish new releases for a CodeMarket application." },
       { name: "robots", content: "noindex" },
@@ -47,7 +50,11 @@ function VersionsPage() {
   const { data: software } = useQuery({
     queryKey: ["admin-software-name", id],
     queryFn: async () => {
-      const { data } = await supabase.from("software").select("name, slug").eq("id", id).maybeSingle();
+      const { data } = await supabase
+        .from("software")
+        .select("name, slug")
+        .eq("id", id)
+        .maybeSingle();
       return data;
     },
   });
@@ -119,7 +126,10 @@ function VersionsPage() {
           .eq("id", editingVersionId);
         if (error) throw error;
       } else {
-        await supabase.from("software_versions").update({ is_current: false }).eq("software_id", id);
+        await supabase
+          .from("software_versions")
+          .update({ is_current: false })
+          .eq("software_id", id);
         const { error } = await supabase.from("software_versions").insert({
           software_id: id,
           ...payload,
@@ -200,7 +210,9 @@ function VersionsPage() {
           <p className="text-muted-foreground">{software?.name ?? "Software"} release history.</p>
         </div>
         <Button asChild variant="outline">
-          <Link to="/admin/software/$id" params={{ id }}>Back to details</Link>
+          <Link to="/admin/software/$id" params={{ id }}>
+            Back to details
+          </Link>
         </Button>
       </div>
 
@@ -227,7 +239,9 @@ function VersionsPage() {
               id="date"
               type="date"
               value={form.release_date}
-              onChange={(event) => setForm((prev) => ({ ...prev, release_date: event.target.value }))}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, release_date: event.target.value }))
+              }
             />
           </div>
           <div className="space-y-2">
@@ -255,7 +269,9 @@ function VersionsPage() {
             id="release-notes"
             rows={3}
             value={form.release_notes}
-            onChange={(event) => setForm((prev) => ({ ...prev, release_notes: event.target.value }))}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, release_notes: event.target.value }))
+            }
           />
         </div>
         <div className="space-y-2">
@@ -299,7 +315,14 @@ function VersionsPage() {
               variant="ghost"
               onClick={() => {
                 setEditingVersionId(null);
-                setForm({ version: "", release_date: new Date().toISOString().slice(0, 10), release_notes: "", file_size: "", file_path: "", minimum_os: "" });
+                setForm({
+                  version: "",
+                  release_date: new Date().toISOString().slice(0, 10),
+                  release_notes: "",
+                  file_size: "",
+                  file_path: "",
+                  minimum_os: "",
+                });
               }}
             >
               Cancel edit
@@ -317,7 +340,10 @@ function VersionsPage() {
           </p>
         ) : (
           versions.map((item) => (
-            <div key={item.id} className="flex flex-wrap items-center gap-4 rounded-xl border bg-card p-4">
+            <div
+              key={item.id}
+              className="flex flex-wrap items-center gap-4 rounded-xl border bg-card p-4"
+            >
               <div className="min-w-40 flex-1">
                 <p className="font-medium">
                   v{item.version} {item.is_current ? <Badge className="ml-2">Current</Badge> : null}

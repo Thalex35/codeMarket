@@ -24,10 +24,26 @@ export const Route = createFileRoute("/about")({
 });
 
 const OFFERS = [
-  { icon: Compass, title: "Easy discovery", body: "A clear catalog with search, filters and honest information about every release." },
-  { icon: ShieldCheck, title: "Trustworthy downloads", body: "Accounts, download history and version tracking so you always know what you installed." },
-  { icon: Rocket, title: "Continuous improvement", body: "Applications evolve with real feedback from the teams that use them daily." },
-  { icon: Code2, title: "Modern engineering", body: "Built with React, TypeScript and a secure cloud backend with strict data rules." },
+  {
+    icon: Compass,
+    title: "Easy discovery",
+    body: "A clear catalog with search, filters and honest information about every release.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Trustworthy downloads",
+    body: "Accounts, download history and version tracking so you always know what you installed.",
+  },
+  {
+    icon: Rocket,
+    title: "Continuous improvement",
+    body: "Applications evolve with real feedback from the teams that use them daily.",
+  },
+  {
+    icon: Code2,
+    title: "Modern engineering",
+    body: "Built with React, TypeScript and a secure cloud backend with strict data rules.",
+  },
 ];
 
 function About() {

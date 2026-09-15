@@ -59,7 +59,10 @@ function AdminPurchases() {
         ? await supabase.from("profiles").select("id, full_name, email").in("id", ids)
         : { data: [] };
       const map = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
-      return rows.map((row) => ({ ...row, profile: row.user_id ? map.get(row.user_id) ?? null : null }));
+      return rows.map((row) => ({
+        ...row,
+        profile: row.user_id ? (map.get(row.user_id) ?? null) : null,
+      }));
     },
   });
 
@@ -83,7 +86,9 @@ function AdminPurchases() {
           </p>
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-44"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
@@ -103,7 +108,10 @@ function AdminPurchases() {
             const profile = row.profile;
             const software = row.software as unknown as { name: string } | null;
             return (
-              <div key={row.id} className="flex flex-wrap items-center gap-4 rounded-xl border bg-card p-4">
+              <div
+                key={row.id}
+                className="flex flex-wrap items-center gap-4 rounded-xl border bg-card p-4"
+              >
                 <div className="min-w-48 flex-1">
                   <p className="font-medium">{software?.name ?? "Software"}</p>
                   <p className="text-sm text-muted-foreground">
@@ -116,7 +124,11 @@ function AdminPurchases() {
                   {row.status}
                 </Badge>
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" onClick={() => void setStatusFor(row.id, "paid")} disabled={row.status === "paid"}>
+                  <Button
+                    size="sm"
+                    onClick={() => void setStatusFor(row.id, "paid")}
+                    disabled={row.status === "paid"}
+                  >
                     Mark paid
                   </Button>
                   <Button

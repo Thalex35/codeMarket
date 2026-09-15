@@ -65,7 +65,11 @@ function DownloadsPage() {
             />
           ) : (
             data.map((row) => {
-              const software = row.software as { name: string; slug: string; cover_url: string | null } | null;
+              const software = row.software as {
+                name: string;
+                slug: string;
+                cover_url: string | null;
+              } | null;
               const version = row.version as { version: string } | null;
               if (!software) return null;
               return (

@@ -7,6 +7,26 @@ function unauthorized() {
   return new Response("Unauthorized", { status: 401 });
 }
 
+async function resolveGitHubAsset(url: URL) {
+  if (url.pathname.includes("/releases/download/")) return url;
+  const match = url.pathname.match(/^\/([^/]+)\/([^/]+)\/releases\/tag\/([^/]+)$/);
+  if (!match) return null;
+
+  const [, owner, repository, tag] = match;
+  const releaseResponse = await fetch(
+    `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/releases/tags/${encodeURIComponent(tag)}`,
+    {
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "CodeMarket-download-proxy" },
+    },
+  );
+  if (!releaseResponse.ok) return null;
+  const release = (await releaseResponse.json()) as {
+    assets?: Array<{ name: string; browser_download_url: string }>;
+  };
+  const asset = release.assets?.find((item) => /\.(exe|msi|zip)$/i.test(item.name));
+  return asset ? new URL(asset.browser_download_url) : null;
+}
+
 export const Route = createFileRoute("/api/software/download")({
   server: {
     handlers: {
@@ -17,7 +37,8 @@ export const Route = createFileRoute("/api/software/download")({
         const token = authorization.slice("Bearer ".length).trim();
         const url = new URL(request.url);
         const versionId = url.searchParams.get("versionId");
-        if (!token || !versionId) return new Response("Missing download information", { status: 400 });
+        if (!token || !versionId)
+          return new Response("Missing download information", { status: 400 });
 
         const supabaseUrl = process.env["SUPABASE_URL"];
         const publishableKey = process.env["SUPABASE_PUBLISHABLE_KEY"];
@@ -65,24 +86,30 @@ export const Route = createFileRoute("/api/software/download")({
           if (!purchase) return new Response("Purchase required", { status: 403 });
         }
 
-        const remoteUrl = new URL(version.file_path);
-        if (
-          remoteUrl.hostname !== "github.com" ||
-          !remoteUrl.pathname.includes("/releases/download/")
-        ) {
-          return new Response(
-            "Invalid GitHub asset URL. Use the direct /releases/download/... installer link.",
-            { status: 400 },
-          );
+        const savedUrl = new URL(version.file_path);
+        if (savedUrl.hostname !== "github.com") {
+          return new Response("Invalid GitHub URL", { status: 400 });
+        }
+        const remoteUrl = await resolveGitHubAsset(savedUrl);
+        if (!remoteUrl) {
+          return new Response("No installer asset was found in this GitHub Release.", {
+            status: 404,
+          });
         }
         const upstream = await fetch(remoteUrl, { redirect: "follow" });
-        if (!upstream.ok || !upstream.body) return new Response("Download unavailable", { status: 502 });
+        if (!upstream.ok || !upstream.body)
+          return new Response("Download unavailable", { status: 502 });
         if ((upstream.headers.get("content-type") ?? "").includes("text/html")) {
-          return new Response("The GitHub URL points to a page, not an installer file.", { status: 502 });
+          return new Response("The GitHub URL points to a page, not an installer file.", {
+            status: 502,
+          });
         }
 
         const headers = new Headers();
-        headers.set("Content-Type", upstream.headers.get("content-type") ?? "application/octet-stream");
+        headers.set(
+          "Content-Type",
+          upstream.headers.get("content-type") ?? "application/octet-stream",
+        );
         const contentLength = upstream.headers.get("content-length");
         if (contentLength) headers.set("Content-Length", contentLength);
         headers.set(

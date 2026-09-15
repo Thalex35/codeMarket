@@ -113,8 +113,13 @@ function Catalog() {
               />
             </div>
 
-            <Select value={search.category ?? "all"} onValueChange={(value) => update("category", value)}>
-              <SelectTrigger aria-label="Category"><SelectValue placeholder="Category" /></SelectTrigger>
+            <Select
+              value={search.category ?? "all"}
+              onValueChange={(value) => update("category", value)}
+            >
+              <SelectTrigger aria-label="Category">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All categories</SelectItem>
                 {CATEGORIES.map((category) => (
@@ -125,8 +130,13 @@ function Catalog() {
               </SelectContent>
             </Select>
 
-            <Select value={search.platform ?? "all"} onValueChange={(value) => update("platform", value)}>
-              <SelectTrigger aria-label="Platform"><SelectValue placeholder="Platform" /></SelectTrigger>
+            <Select
+              value={search.platform ?? "all"}
+              onValueChange={(value) => update("platform", value)}
+            >
+              <SelectTrigger aria-label="Platform">
+                <SelectValue placeholder="Platform" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All platforms</SelectItem>
                 {PLATFORMS.map((platform) => (
@@ -137,8 +147,13 @@ function Catalog() {
               </SelectContent>
             </Select>
 
-            <Select value={search.pricing ?? "all"} onValueChange={(value) => update("pricing", value)}>
-              <SelectTrigger aria-label="Price"><SelectValue placeholder="Price" /></SelectTrigger>
+            <Select
+              value={search.pricing ?? "all"}
+              onValueChange={(value) => update("pricing", value)}
+            >
+              <SelectTrigger aria-label="Price">
+                <SelectValue placeholder="Price" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Free & paid</SelectItem>
                 <SelectItem value="free">Free</SelectItem>
@@ -146,8 +161,13 @@ function Catalog() {
               </SelectContent>
             </Select>
 
-            <Select value={search.sort ?? "newest"} onValueChange={(value) => update("sort", value)}>
-              <SelectTrigger aria-label="Sort by"><SelectValue placeholder="Sort" /></SelectTrigger>
+            <Select
+              value={search.sort ?? "newest"}
+              onValueChange={(value) => update("sort", value)}
+            >
+              <SelectTrigger aria-label="Sort by">
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="newest">Newest</SelectItem>
                 <SelectItem value="downloads">Most downloaded</SelectItem>

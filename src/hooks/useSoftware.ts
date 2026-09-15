@@ -30,9 +30,12 @@ export function usePublishedSoftware(filters: SoftwareFilters = {}) {
           `name.ilike.${term},short_description.ilike.${term},description.ilike.${term},category.ilike.${term}`,
         );
       }
-      if (filters.category && filters.category !== "all") query = query.eq("category", filters.category);
-      if (filters.platform && filters.platform !== "all") query = query.eq("platform", filters.platform);
-      if (filters.pricing && filters.pricing !== "all") query = query.eq("pricing_type", filters.pricing);
+      if (filters.category && filters.category !== "all")
+        query = query.eq("category", filters.category);
+      if (filters.platform && filters.platform !== "all")
+        query = query.eq("platform", filters.platform);
+      if (filters.pricing && filters.pricing !== "all")
+        query = query.eq("pricing_type", filters.pricing);
 
       switch (filters.sort) {
         case "downloads":

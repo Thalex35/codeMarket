@@ -37,7 +37,8 @@ async function getAccessToken() {
     body: "scope=read,write&grant_type=client_credentials",
   });
   const payload = (await response.json()) as { access_token?: string };
-  if (!response.ok || !payload.access_token) throw new Error("Official MonCash authentication failed");
+  if (!response.ok || !payload.access_token)
+    throw new Error("Official MonCash authentication failed");
   return payload.access_token;
 }
 
@@ -63,7 +64,11 @@ async function readCallbackValues(request: Request) {
   };
 }
 
-async function retrievePayment(accessToken: string, orderId: string | null, transactionId: string | null) {
+async function retrievePayment(
+  accessToken: string,
+  orderId: string | null,
+  transactionId: string | null,
+) {
   const endpoint = transactionId ? "RetrieveTransactionPayment" : "RetrieveOrderPayment";
   const body = transactionId ? { transactionId } : { orderId };
   const response = await fetch(`${apiBase()}/v1/${endpoint}`, {
@@ -83,14 +88,20 @@ async function retrievePayment(accessToken: string, orderId: string | null, tran
 
 async function handleNotification(request: Request) {
   const { orderId, transactionId } = await readCallbackValues(request);
-  if (!orderId && !transactionId) return Response.redirect(`${getAppUrl()}/payment/complete?status=invalid`, 303);
+  if (!orderId && !transactionId)
+    return Response.redirect(`${getAppUrl()}/payment/complete?status=invalid`, 303);
 
   try {
     const accessToken = await getAccessToken();
     const result = await retrievePayment(accessToken, orderId, transactionId);
     const payment = result.payload.payment;
     const providerReference = orderId ?? payment?.reference;
-    if (!result.ok || !payment || payment.message?.toLowerCase() !== "successful" || !providerReference) {
+    if (
+      !result.ok ||
+      !payment ||
+      payment.message?.toLowerCase() !== "successful" ||
+      !providerReference
+    ) {
       return Response.redirect(`${getAppUrl()}/payment/complete?status=failed`, 303);
     }
 
@@ -100,7 +111,8 @@ async function handleNotification(request: Request) {
       .eq("provider", "official-moncash")
       .eq("provider_reference", providerReference)
       .maybeSingle();
-    if (purchaseError || !purchase) return Response.redirect(`${getAppUrl()}/payment/complete?status=failed`, 303);
+    if (purchaseError || !purchase)
+      return Response.redirect(`${getAppUrl()}/payment/complete?status=failed`, 303);
 
     const expectedAmount = Number(purchase.charged_amount ?? purchase.amount);
     const paidAmount = Number(payment.cost);
@@ -114,7 +126,8 @@ async function handleNotification(request: Request) {
         .update({ status: "paid", paid_at: new Date().toISOString() } as never)
         .eq("id", purchase.id)
         .eq("status", "pending");
-      if (updateError) return Response.redirect(`${getAppUrl()}/payment/complete?status=failed`, 303);
+      if (updateError)
+        return Response.redirect(`${getAppUrl()}/payment/complete?status=failed`, 303);
     }
 
     return Response.redirect(`${getAppUrl()}/payment/complete?status=success`, 303);

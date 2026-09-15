@@ -202,7 +202,10 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
-    <div className="flex min-h-screen flex-col bg-background" key={pathname === "" ? "root" : undefined}>
+    <div
+      className="flex min-h-screen flex-col bg-background"
+      key={pathname === "" ? "root" : undefined}
+    >
       <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex items-center gap-6">

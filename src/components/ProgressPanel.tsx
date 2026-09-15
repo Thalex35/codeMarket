@@ -24,9 +24,18 @@ export function ProgressPanel({ label, progress, detail, onCancel }: ProgressPan
           <span className="truncate text-sm font-semibold">{complete ? "Complete" : label}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-sm font-semibold tabular-nums text-primary">{progress}%</span>
+          <span className="font-mono text-sm font-semibold tabular-nums text-primary">
+            {progress}%
+          </span>
           {onCancel && !complete ? (
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onCancel} aria-label="Cancel upload">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={onCancel}
+              aria-label="Cancel upload"
+            >
               <X className="h-4 w-4" aria-hidden />
             </Button>
           ) : null}
