@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Circle, Users, Wifi } from "lucide-react";
+import { Circle, ShieldCheck, Users, Wifi } from "lucide-react";
 import { toast } from "sonner";
 
 import { EmptyState } from "@/components/EmptyState";
@@ -26,21 +26,27 @@ export const Route = createFileRoute("/admin/users")({
 
 function AdminUsers() {
   const queryClient = useQueryClient();
-  const { onlineUserIds, presenceStatus } = useAuth();
+  const { user, onlineUserIds, presenceStatus } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
-      const [{ data: profiles, error }, { data: downloads }, { data: likes }, { data: purchases }] =
-        await Promise.all([
-          supabase
-            .from("profiles")
-            .select("id, full_name, email, status, created_at")
-            .order("created_at", { ascending: false }),
-          supabase.from("downloads").select("user_id"),
-          supabase.from("likes").select("user_id"),
-          supabase.from("purchases").select("user_id"),
-        ]);
+      const [
+        { data: profiles, error },
+        { data: downloads },
+        { data: likes },
+        { data: purchases },
+        { data: roles },
+      ] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, full_name, email, status, created_at")
+          .order("created_at", { ascending: false }),
+        supabase.from("downloads").select("user_id"),
+        supabase.from("likes").select("user_id"),
+        supabase.from("purchases").select("user_id"),
+        supabase.from("user_roles").select("user_id, role"),
+      ]);
       if (error) throw error;
 
       const tally = (rows: { user_id: string | null }[] | null) => {
@@ -55,9 +61,11 @@ function AdminUsers() {
       const downloadMap = tally(downloads);
       const likeMap = tally(likes);
       const purchaseMap = tally(purchases);
+      const roleMap = new Map((roles ?? []).map((role) => [role.user_id, role.role]));
 
       return (profiles ?? []).map((profile) => ({
         ...profile,
+        role: roleMap.get(profile.id) ?? "user",
         downloads: downloadMap.get(profile.id) ?? 0,
         likes: likeMap.get(profile.id) ?? 0,
         purchases: purchaseMap.get(profile.id) ?? 0,
@@ -73,6 +81,22 @@ function AdminUsers() {
     }
     await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     toast.success(status === "active" ? "Account enabled." : "Account disabled.");
+  }
+
+  async function setRole(id: string, role: "user" | "admin") {
+    const { error } = await supabase.rpc(
+      "set_user_role" as never,
+      {
+        _user_id: id,
+        _role: role,
+      } as never,
+    );
+    if (error) {
+      toast.error(error.message || "The role update failed. Please try again.");
+      return;
+    }
+    await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    toast.success(role === "admin" ? "Administrator access granted." : "User access restored.");
   }
 
   return (
@@ -115,6 +139,7 @@ function AdminUsers() {
                 <th className="p-3 font-medium">Likes</th>
                 <th className="p-3 font-medium">Purchases</th>
                 <th className="p-3 font-medium">Status</th>
+                <th className="p-3 font-medium">Role</th>
                 <th className="p-3 font-medium">Actions</th>
               </tr>
             </thead>
@@ -154,15 +179,38 @@ function AdminUsers() {
                     </Badge>
                   </td>
                   <td className="p-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        void setStatus(row.id, row.status === "active" ? "disabled" : "active")
-                      }
+                    <Badge
+                      variant={row.role === "admin" ? "default" : "outline"}
+                      className={row.role === "admin" ? "bg-primary/90" : ""}
                     >
-                      {row.status === "active" ? "Disable" : "Enable"}
-                    </Button>
+                      <ShieldCheck className="mr-1 h-3 w-3" aria-hidden />
+                      {row.role === "admin" ? "Admin" : "User"}
+                    </Badge>
+                  </td>
+                  <td className="p-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          void setStatus(row.id, row.status === "active" ? "disabled" : "active")
+                        }
+                      >
+                        {row.status === "active" ? "Disable" : "Enable"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={row.role === "admin" ? "secondary" : "default"}
+                        disabled={
+                          row.email?.toLowerCase() === "admin@user.dev" || row.id === user?.id
+                        }
+                        onClick={() =>
+                          void setRole(row.id, row.role === "admin" ? "user" : "admin")
+                        }
+                      >
+                        {row.role === "admin" ? "Make user" : "Make admin"}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
