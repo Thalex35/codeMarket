@@ -17,6 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate, formatPrice } from "@/lib/catalog";
+import { getPurchaseStatusUpdate } from "@/lib/purchase-flow";
 
 export const Route = createFileRoute("/admin/purchases")({
   head: () => ({
@@ -67,12 +68,15 @@ function AdminPurchases() {
   });
 
   async function setStatusFor(id: string, next: string) {
-    const { error } = await supabase.from("purchases").update({ status: next }).eq("id", id);
+    const update = getPurchaseStatusUpdate(next);
+    const { error } = await supabase.from("purchases").update(update).eq("id", id);
     if (error) {
       toast.error("The update failed. Please try again.");
       return;
     }
     await queryClient.invalidateQueries({ queryKey: ["admin-purchases"] });
+    await queryClient.invalidateQueries({ queryKey: ["my-purchases"] });
+    await queryClient.invalidateQueries({ queryKey: ["purchase-access"] });
     toast.success(`Purchase marked ${next}.`);
   }
 

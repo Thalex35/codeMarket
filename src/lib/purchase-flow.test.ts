@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildWhatsAppPurchaseMessage, getPurchaseAccessState } from "./purchase-flow.ts";
+import {
+  buildWhatsAppPurchaseMessage,
+  getPurchaseAccessState,
+  getPurchaseStatusUpdate,
+} from "./purchase-flow.ts";
 
 test("buildWhatsAppPurchaseMessage formats the WhatsApp buy request", () => {
   assert.equal(
@@ -24,4 +28,14 @@ test("getPurchaseAccessState marks paid and pending correctly", () => {
   ]);
 
   assert.deepEqual(access, { paid: true, pending: true });
+});
+
+test("getPurchaseStatusUpdate records confirmation timestamps", () => {
+  const paidUpdate = getPurchaseStatusUpdate("paid");
+  const cancelledUpdate = getPurchaseStatusUpdate("cancelled");
+
+  assert.equal(paidUpdate.status, "paid");
+  assert.ok(paidUpdate.paid_at);
+  assert.equal(cancelledUpdate.status, "cancelled");
+  assert.ok(cancelledUpdate.cancelled_at);
 });

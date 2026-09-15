@@ -7,11 +7,31 @@ export type PurchaseRowLike = {
   status?: string | null;
 };
 
+export type PurchaseStatusUpdate = {
+  status: string;
+  paid_at?: string;
+  cancelled_at?: string;
+};
+
 export function getPurchaseAccessState(rows: PurchaseRowLike[] = []): PurchaseAccessState {
   return {
     paid: rows.some((row) => row.status === "paid"),
     pending: rows.some((row) => row.status === "pending"),
   };
+}
+
+export function getPurchaseStatusUpdate(status: string): PurchaseStatusUpdate {
+  const timestamp = new Date().toISOString();
+
+  if (status === "paid") {
+    return { status, paid_at: timestamp };
+  }
+
+  if (status === "cancelled") {
+    return { status, cancelled_at: timestamp };
+  }
+
+  return { status };
 }
 
 export function buildWhatsAppPurchaseMessage({
