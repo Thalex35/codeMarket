@@ -56,7 +56,7 @@ const signupSchema = z
 function AuthPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, isActive, loading } = useAuth();
   const [busy, setBusy] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
   const [forgot, setForgot] = useState(false);
@@ -67,12 +67,17 @@ function AuthPage() {
 
   useEffect(() => {
     if (loading || !user) return;
+    if (!isActive) {
+      void supabase.auth.signOut();
+      toast.error("This account is disabled. Please contact support.");
+      return;
+    }
     if (isAdmin) {
       void navigate({ to: "/admin/dashboard", replace: true });
     } else {
       void navigate({ to: search.redirect ?? "/", replace: true });
     }
-  }, [user, isAdmin, loading, navigate, search.redirect]);
+  }, [user, isAdmin, isActive, loading, navigate, search.redirect]);
 
   async function handleLogin(event: React.FormEvent) {
     event.preventDefault();

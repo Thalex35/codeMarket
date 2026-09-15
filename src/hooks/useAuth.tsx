@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 
@@ -16,6 +17,7 @@ type AuthContextValue = {
   user: User | null;
   profile: Profile | null;
   isAdmin: boolean;
+  isActive: boolean;
   loading: boolean;
   refreshProfile: () => Promise<void>;
 };
@@ -25,6 +27,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   profile: null,
   isAdmin: false,
+  isActive: false,
   loading: true,
   refreshProfile: async () => {},
 });
@@ -33,12 +36,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isActive, setIsActive] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function loadAccount(userId: string | undefined) {
     if (!userId) {
       setProfile(null);
       setIsAdmin(false);
+      setIsActive(false);
       return;
     }
     const [{ data: profileRow }, { data: adminFlag }] = await Promise.all([
@@ -49,8 +54,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle(),
       supabase.rpc("is_admin"),
     ]);
-    setProfile((profileRow as Profile) ?? null);
+
+    const nextProfile = (profileRow as Profile) ?? null;
+    const active = nextProfile?.status === "active";
+    setProfile(nextProfile);
     setIsAdmin(Boolean(adminFlag));
+    setIsActive(active);
+
+    if (nextProfile && !active) {
+      await supabase.auth.signOut();
+    }
   }
 
   useEffect(() => {
@@ -80,10 +93,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       profile,
       isAdmin,
+      isActive,
       loading,
       refreshProfile: () => loadAccount(session?.user.id),
     }),
-    [session, profile, isAdmin, loading],
+    [session, profile, isAdmin, isActive, loading],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
