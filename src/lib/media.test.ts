@@ -5,7 +5,10 @@ import { normalizeStorageReference, parseStorageObjectReference } from "./media"
 
 test("accepts valid storage references", () => {
   assert.equal(normalizeStorageReference("covers/demo/logo.png"), "covers/demo/logo.png");
-  assert.equal(normalizeStorageReference("software-files/abc/file.zip"), "software-files/abc/file.zip");
+  assert.equal(
+    normalizeStorageReference("software-files/abc/file.zip"),
+    "software-files/abc/file.zip",
+  );
 });
 
 test("rejects invalid bucket or traversal path", () => {

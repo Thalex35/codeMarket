@@ -91,7 +91,9 @@ export function SoftwareForm({
   });
   const [compressInstaller, setCompressInstaller] = useState(false);
   const [installerSize, setInstallerSize] = useState<InstallerSizeInfo | null>(null);
-  const [uploadedFiles, setUploadedFiles] = useState<Partial<Record<UploadKind, UploadedFileInfo>>>({});
+  const [uploadedFiles, setUploadedFiles] = useState<Partial<Record<UploadKind, UploadedFileInfo>>>(
+    {},
+  );
   const [screenshots, setScreenshots] = useState<Screenshot[]>(initialScreenshots);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -134,7 +136,9 @@ export function SoftwareForm({
       return;
     }
     if (kind === "installer" && file.name.toLowerCase().endsWith(".lnk")) {
-      toast.error("Please upload the actual installer (.exe, .msi, or .zip), not a Windows shortcut.");
+      toast.error(
+        "Please upload the actual installer (.exe, .msi, or .zip), not a Windows shortcut.",
+      );
       return;
     }
     setUploadedFiles((prev) => ({ ...prev, [kind]: undefined }));
@@ -143,7 +147,8 @@ export function SoftwareForm({
     const controller = new AbortController();
     uploadControllers.current[kind] = controller;
     try {
-      const bucket = kind === "cover" ? "covers" : kind === "screenshot" ? "screenshots" : "software-files";
+      const bucket =
+        kind === "cover" ? "covers" : kind === "screenshot" ? "screenshots" : "software-files";
       let fileToUpload = file;
       if (kind === "installer" && compressInstaller) {
         const zip = new JSZip();
@@ -161,7 +166,12 @@ export function SoftwareForm({
           processing: false,
         });
       } else if (kind === "installer") {
-        setInstallerSize({ original: file.size, prepared: file.size, compressed: false, processing: false });
+        setInstallerSize({
+          original: file.size,
+          prepared: file.size,
+          compressed: false,
+          processing: false,
+        });
       }
       if (kind === "installer" && fileToUpload.size > MAX_INSTALLER) {
         throw new Error("The final installer file is larger than the 500 MB limit.");
@@ -175,7 +185,8 @@ export function SoftwareForm({
         controller.signal,
       );
       if (kind === "cover") setForm((prev) => ({ ...prev, cover_url: reference }));
-      if (kind === "screenshot") setScreenshots((prev) => [...prev, { image_url: reference, caption: "" }]);
+      if (kind === "screenshot")
+        setScreenshots((prev) => [...prev, { image_url: reference, caption: "" }]);
       if (kind === "installer") {
         setVersion((prev) => ({
           ...prev,
@@ -190,7 +201,8 @@ export function SoftwareForm({
       toast.success("Upload complete.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      const rawMessage = error instanceof Error ? error.message : "The upload failed. Please try again.";
+      const rawMessage =
+        error instanceof Error ? error.message : "The upload failed. Please try again.";
       const lowerMessage = rawMessage.toLowerCase();
       const message = lowerMessage.includes("maximum allowed size")
         ? "Supabase is limiting this bucket. Set software-files to 500 MB in Supabase Storage settings, then try again."
@@ -238,7 +250,10 @@ export function SoftwareForm({
         price,
         currency: form.currency,
         cover_url: form.cover_url || null,
-        features: features.split("\n").map((line) => line.trim()).filter(Boolean),
+        features: features
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean),
         requirements: parsedRequirements(),
         featured: form.featured,
         published: publish,
@@ -334,7 +349,9 @@ export function SoftwareForm({
             id="short"
             maxLength={200}
             value={form.short_description}
-            onChange={(event) => setForm((prev) => ({ ...prev, short_description: event.target.value }))}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, short_description: event.target.value }))
+            }
           />
           {errors["short_description"] ? (
             <p className="text-xs text-destructive">{errors["short_description"]}</p>
@@ -355,19 +372,37 @@ export function SoftwareForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Category</Label>
-            <Select value={form.category} onValueChange={(value) => setForm((prev) => ({ ...prev, category: value }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={form.category}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, category: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                {CATEGORIES.map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
             <Label>Platform</Label>
-            <Select value={form.platform} onValueChange={(value) => setForm((prev) => ({ ...prev, platform: value }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={form.platform}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, platform: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {PLATFORMS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                {PLATFORMS.map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -383,7 +418,9 @@ export function SoftwareForm({
               value={form.pricing_type}
               onValueChange={(value) => setForm((prev) => ({ ...prev, pricing_type: value }))}
             >
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="free">Free</SelectItem>
                 <SelectItem value="paid">Paid</SelectItem>
@@ -402,7 +439,9 @@ export function SoftwareForm({
                   value={form.price}
                   onChange={(event) => setForm((prev) => ({ ...prev, price: event.target.value }))}
                 />
-                {errors["price"] ? <p className="text-xs text-destructive">{errors["price"]}</p> : null}
+                {errors["price"] ? (
+                  <p className="text-xs text-destructive">{errors["price"]}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="currency">Currency</Label>
@@ -424,7 +463,12 @@ export function SoftwareForm({
         <h2 className="font-display text-lg font-semibold">Details</h2>
         <div className="space-y-2">
           <Label htmlFor="features">Features (one per line)</Label>
-          <Textarea id="features" rows={5} value={features} onChange={(event) => setFeatures(event.target.value)} />
+          <Textarea
+            id="features"
+            rows={5}
+            value={features}
+            onChange={(event) => setFeatures(event.target.value)}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="requirements">Requirements (one per line, e.g. `RAM: 4 GB`)</Label>
@@ -446,7 +490,9 @@ export function SoftwareForm({
               <Input
                 id="version"
                 value={version.version}
-                onChange={(event) => setVersion((prev) => ({ ...prev, version: event.target.value }))}
+                onChange={(event) =>
+                  setVersion((prev) => ({ ...prev, version: event.target.value }))
+                }
               />
             </div>
             <div className="space-y-2">
@@ -455,7 +501,9 @@ export function SoftwareForm({
                 id="release-date"
                 type="date"
                 value={version.release_date}
-                onChange={(event) => setVersion((prev) => ({ ...prev, release_date: event.target.value }))}
+                onChange={(event) =>
+                  setVersion((prev) => ({ ...prev, release_date: event.target.value }))
+                }
               />
             </div>
             <div className="space-y-2">
@@ -464,7 +512,9 @@ export function SoftwareForm({
                 id="file-size"
                 value={version.file_size}
                 placeholder="e.g. 48 MB"
-                onChange={(event) => setVersion((prev) => ({ ...prev, file_size: event.target.value }))}
+                onChange={(event) =>
+                  setVersion((prev) => ({ ...prev, file_size: event.target.value }))
+                }
               />
             </div>
           </div>
@@ -474,7 +524,9 @@ export function SoftwareForm({
               id="notes"
               rows={3}
               value={version.release_notes}
-              onChange={(event) => setVersion((prev) => ({ ...prev, release_notes: event.target.value }))}
+              onChange={(event) =>
+                setVersion((prev) => ({ ...prev, release_notes: event.target.value }))
+              }
             />
           </div>
           <div className="space-y-2">
@@ -488,7 +540,11 @@ export function SoftwareForm({
               />
             ) : null}
             <label className="inline-flex">
-              <input type="file" className="hidden" onChange={(event) => void handleUpload(event, "installer")} />
+              <input
+                type="file"
+                className="hidden"
+                onChange={(event) => void handleUpload(event, "installer")}
+              />
               <span className="inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm hover:bg-accent">
                 {uploading.installer ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
@@ -518,7 +574,8 @@ export function SoftwareForm({
             </div>
             {uploadedFiles.installer ? (
               <p className="text-sm font-medium text-emerald-700">
-                Upload complete: {uploadedFiles.installer.name} ({formatFileSize(uploadedFiles.installer.size)})
+                Upload complete: {uploadedFiles.installer.name} (
+                {formatFileSize(uploadedFiles.installer.size)})
               </p>
             ) : null}
             <label className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -531,13 +588,19 @@ export function SoftwareForm({
             {installerSize ? (
               <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
                 <p>
-                  Original size: <strong className="text-foreground">{formatFileSize(installerSize.original)}</strong>
+                  Original size:{" "}
+                  <strong className="text-foreground">
+                    {formatFileSize(installerSize.original)}
+                  </strong>
                 </p>
                 {installerSize.processing ? (
                   <p className="mt-1">Calculating compressed size...</p>
                 ) : (
                   <p className="mt-1">
-                    Upload size: <strong className="text-foreground">{formatFileSize(installerSize.prepared)}</strong>
+                    Upload size:{" "}
+                    <strong className="text-foreground">
+                      {formatFileSize(installerSize.prepared)}
+                    </strong>
                     {installerSize.compressed ? " (ZIP compressed)" : " (original file)"}
                   </p>
                 )}
@@ -566,9 +629,18 @@ export function SoftwareForm({
           />
         ) : null}
         <div className="flex flex-wrap items-center gap-4">
-          <AppImage reference={form.cover_url} alt="Cover preview" className="h-24 w-36 rounded-md object-cover" />
+          <AppImage
+            reference={form.cover_url}
+            alt="Cover preview"
+            className="h-24 w-36 rounded-md object-cover"
+          />
           <label className="inline-flex">
-            <input type="file" accept="image/*" className="hidden" onChange={(event) => void handleUpload(event, "cover")} />
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(event) => void handleUpload(event, "cover")}
+            />
             <span className="inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm hover:bg-accent">
               {uploading.cover ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
@@ -580,7 +652,8 @@ export function SoftwareForm({
           </label>
           {uploadedFiles.cover ? (
             <p className="w-full text-sm font-medium text-emerald-700">
-              Cover uploaded: {uploadedFiles.cover.name} ({formatFileSize(uploadedFiles.cover.size)})
+              Cover uploaded: {uploadedFiles.cover.name} ({formatFileSize(uploadedFiles.cover.size)}
+              )
             </p>
           ) : null}
         </div>
@@ -602,8 +675,11 @@ export function SoftwareForm({
                   className="absolute -right-2 -top-2 h-6 w-6"
                   aria-label="Remove screenshot"
                   onClick={async () => {
-                    if (shot.id) await supabase.from("software_screenshots").delete().eq("id", shot.id);
-                    setScreenshots((prev) => prev.filter((item) => item.image_url !== shot.image_url));
+                    if (shot.id)
+                      await supabase.from("software_screenshots").delete().eq("id", shot.id);
+                    setScreenshots((prev) =>
+                      prev.filter((item) => item.image_url !== shot.image_url),
+                    );
                   }}
                 >
                   <Trash2 className="h-3 w-3" aria-hidden />
@@ -627,7 +703,8 @@ export function SoftwareForm({
             </label>
             {uploadedFiles.screenshot ? (
               <p className="mt-3 text-sm font-medium text-emerald-700">
-                Screenshot uploaded: {uploadedFiles.screenshot.name} ({formatFileSize(uploadedFiles.screenshot.size)})
+                Screenshot uploaded: {uploadedFiles.screenshot.name} (
+                {formatFileSize(uploadedFiles.screenshot.size)})
               </p>
             ) : null}
           </div>
@@ -639,7 +716,9 @@ export function SoftwareForm({
         <label className="flex items-center gap-3 text-sm">
           <Checkbox
             checked={form.featured}
-            onCheckedChange={(checked) => setForm((prev) => ({ ...prev, featured: Boolean(checked) }))}
+            onCheckedChange={(checked) =>
+              setForm((prev) => ({ ...prev, featured: Boolean(checked) }))
+            }
           />
           Feature this software on the home page
         </label>

@@ -1,15 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,7 +11,10 @@ export const Route = createFileRoute("/admin/analytics")({
   head: () => ({
     meta: [
       { title: "Analytics — CodeMarket admin" },
-      { name: "description", content: "Privacy-conscious activity analytics for the CodeMarket platform." },
+      {
+        name: "description",
+        content: "Privacy-conscious activity analytics for the CodeMarket platform.",
+      },
       { property: "og:title", content: "Analytics — CodeMarket admin" },
       { property: "og:description", content: "Activity analytics for the CodeMarket platform." },
       { name: "robots", content: "noindex" },
@@ -100,7 +95,13 @@ function AdminAnalytics() {
                   <BarChart data={data.byDay}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                     <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={12} />
-                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} fontSize={12} width={30} />
+                    <YAxis
+                      allowDecimals={false}
+                      tickLine={false}
+                      axisLine={false}
+                      fontSize={12}
+                      width={30}
+                    />
                     <Tooltip />
                     <Bar dataKey="count" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
                   </BarChart>

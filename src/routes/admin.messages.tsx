@@ -64,7 +64,9 @@ function AdminMessages() {
           <p className="text-muted-foreground">Contact form submissions.</p>
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-44"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All messages</SelectItem>
             <SelectItem value="unread">Unread</SelectItem>
@@ -98,7 +100,10 @@ function AdminMessages() {
                       {row.name} · {row.email} · {formatDate(row.created_at)}
                     </p>
                   </div>
-                  <Badge variant={row.status === "unread" ? "default" : "secondary"} className="capitalize">
+                  <Badge
+                    variant={row.status === "unread" ? "default" : "secondary"}
+                    className="capitalize"
+                  >
                     {row.status}
                   </Badge>
                 </button>
@@ -107,11 +112,17 @@ function AdminMessages() {
                     <p className="whitespace-pre-line text-sm">{row.message}</p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       <Button size="sm" variant="outline" asChild>
-                        <a href={`mailto:${row.email}?subject=Re: ${encodeURIComponent(row.subject)}`}>
+                        <a
+                          href={`mailto:${row.email}?subject=Re: ${encodeURIComponent(row.subject)}`}
+                        >
                           Reply by email
                         </a>
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => void updateStatus(row.id, "archived")}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => void updateStatus(row.id, "archived")}
+                      >
                         Archive
                       </Button>
                     </div>

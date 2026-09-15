@@ -34,7 +34,9 @@ function LikesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("likes")
-        .select("id, created_at, software:software_id (id, name, slug, cover_url, short_description)")
+        .select(
+          "id, created_at, software:software_id (id, name, slug, cover_url, short_description)",
+        )
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -74,12 +76,18 @@ function LikesPage() {
             />
           ) : (
             data.map((row) => {
-              const software = row.software as
-                | { name: string; slug: string; cover_url: string | null; short_description: string }
-                | null;
+              const software = row.software as {
+                name: string;
+                slug: string;
+                cover_url: string | null;
+                short_description: string;
+              } | null;
               if (!software) return null;
               return (
-                <div key={row.id} className="flex flex-wrap items-center gap-4 rounded-xl border bg-card p-4">
+                <div
+                  key={row.id}
+                  className="flex flex-wrap items-center gap-4 rounded-xl border bg-card p-4"
+                >
                   <AppImage
                     reference={software.cover_url}
                     alt={`${software.name} cover`}

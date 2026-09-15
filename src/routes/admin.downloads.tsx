@@ -46,7 +46,9 @@ function AdminDownloads() {
     queryFn: async () => {
       let query = supabase
         .from("downloads")
-        .select("id, user_id, downloaded_at, software:software_id (name), version:version_id (version)")
+        .select(
+          "id, user_id, downloaded_at, software:software_id (name), version:version_id (version)",
+        )
         .order("downloaded_at", { ascending: false })
         .limit(200);
       if (softwareId !== "all") query = query.eq("software_id", softwareId);
@@ -59,7 +61,10 @@ function AdminDownloads() {
         ? await supabase.from("profiles").select("id, full_name, email").in("id", ids)
         : { data: [] };
       const map = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
-      return rows.map((row) => ({ ...row, profile: row.user_id ? map.get(row.user_id) ?? null : null }));
+      return rows.map((row) => ({
+        ...row,
+        profile: row.user_id ? (map.get(row.user_id) ?? null) : null,
+      }));
     },
   });
 
@@ -72,11 +77,15 @@ function AdminDownloads() {
 
       <div className="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2">
         <Select value={softwareId} onValueChange={setSoftwareId}>
-          <SelectTrigger><SelectValue placeholder="Software" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Software" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All software</SelectItem>
             {(softwareList ?? []).map((item) => (
-              <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+              <SelectItem key={item.id} value={item.id}>
+                {item.name}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>

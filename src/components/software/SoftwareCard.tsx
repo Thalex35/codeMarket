@@ -51,7 +51,8 @@ export function SoftwareCard({ software }: { software: Software }) {
               <Heart className="h-3.5 w-3.5" aria-hidden /> {formatCount(software.like_count)}
             </span>
             <span className="flex items-center gap-1">
-              <Download className="h-3.5 w-3.5" aria-hidden /> {formatCount(software.download_count)}
+              <Download className="h-3.5 w-3.5" aria-hidden />{" "}
+              {formatCount(software.download_count)}
             </span>
           </span>
           <Button asChild size="sm" variant="secondary">

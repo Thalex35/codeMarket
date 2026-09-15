@@ -24,7 +24,10 @@ export const Route = createFileRoute("/admin/software/")({
   head: () => ({
     meta: [
       { title: "Manage software — CodeMarket admin" },
-      { name: "description", content: "Create, publish and manage the CodeMarket software catalog." },
+      {
+        name: "description",
+        content: "Create, publish and manage the CodeMarket software catalog.",
+      },
       { property: "og:title", content: "Manage software — CodeMarket admin" },
       { property: "og:description", content: "Manage the CodeMarket software catalog." },
       { name: "robots", content: "noindex" },
@@ -66,7 +69,10 @@ function AdminSoftwareList() {
   });
 
   async function update(id: string, patch: Record<string, unknown>, message: string) {
-    const { error } = await supabase.from("software").update(patch as never).eq("id", id);
+    const { error } = await supabase
+      .from("software")
+      .update(patch as never)
+      .eq("id", id);
     if (error) {
       toast.error("The update failed. Please try again.");
       return;
@@ -96,16 +102,22 @@ function AdminSoftwareList() {
           onChange={(event) => setSearch(event.target.value)}
         />
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All categories</SelectItem>
             {CATEGORIES.map((item) => (
-              <SelectItem key={item} value={item}>{item}</SelectItem>
+              <SelectItem key={item} value={item}>
+                {item}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="published">Published</SelectItem>
@@ -114,7 +126,9 @@ function AdminSoftwareList() {
           </SelectContent>
         </Select>
         <Select value={pricing} onValueChange={setPricing}>
-          <SelectTrigger><SelectValue placeholder="Pricing" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Pricing" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Free and paid</SelectItem>
             <SelectItem value="free">Free</SelectItem>
@@ -122,7 +136,9 @@ function AdminSoftwareList() {
           </SelectContent>
         </Select>
         <Select value={sort} onValueChange={setSort}>
-          <SelectTrigger><SelectValue placeholder="Sort" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Sort" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="updated">Recently updated</SelectItem>
             <SelectItem value="downloads">Most downloaded</SelectItem>
@@ -133,14 +149,19 @@ function AdminSoftwareList() {
 
       {isLoading ? (
         <div className="space-y-3">
-          {[0, 1, 2].map((key) => <Skeleton key={key} className="h-24 w-full rounded-xl" />)}
+          {[0, 1, 2].map((key) => (
+            <Skeleton key={key} className="h-24 w-full rounded-xl" />
+          ))}
         </div>
       ) : !data?.length ? (
         <EmptyState icon={Package} title="No software available yet." />
       ) : (
         <div className="space-y-3">
           {data.map((item) => (
-            <div key={item.id} className="flex flex-wrap items-center gap-4 rounded-xl border bg-card p-4">
+            <div
+              key={item.id}
+              className="flex flex-wrap items-center gap-4 rounded-xl border bg-card p-4"
+            >
               <AppImage
                 reference={item.cover_url}
                 alt={`${item.name} cover`}
@@ -149,7 +170,11 @@ function AdminSoftwareList() {
               <div className="min-w-48 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium">{item.name}</p>
-                  <Badge variant={item.archived ? "destructive" : item.published ? "default" : "secondary"}>
+                  <Badge
+                    variant={
+                      item.archived ? "destructive" : item.published ? "default" : "secondary"
+                    }
+                  >
                     {item.archived ? "Archived" : item.published ? "Published" : "Draft"}
                   </Badge>
                   {item.featured ? <Badge variant="outline">Featured</Badge> : null}
@@ -163,13 +188,19 @@ function AdminSoftwareList() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline">
-                  <Link to="/software/$slug" params={{ slug: item.slug }}>View</Link>
+                  <Link to="/software/$slug" params={{ slug: item.slug }}>
+                    View
+                  </Link>
                 </Button>
                 <Button asChild size="sm" variant="outline">
-                  <Link to="/admin/software/$id" params={{ id: item.id }}>Edit</Link>
+                  <Link to="/admin/software/$id" params={{ id: item.id }}>
+                    Edit
+                  </Link>
                 </Button>
                 <Button asChild size="sm" variant="outline">
-                  <Link to="/admin/software/$id/versions" params={{ id: item.id }}>Versions</Link>
+                  <Link to="/admin/software/$id/versions" params={{ id: item.id }}>
+                    Versions
+                  </Link>
                 </Button>
                 <Button
                   size="sm"

@@ -117,7 +117,9 @@ function AdminUsers() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => void setStatus(row.id, row.status === "active" ? "disabled" : "active")}
+                      onClick={() =>
+                        void setStatus(row.id, row.status === "active" ? "disabled" : "active")
+                      }
                     >
                       {row.status === "active" ? "Disable" : "Enable"}
                     </Button>

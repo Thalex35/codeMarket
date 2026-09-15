@@ -13,7 +13,10 @@ export const Route = createFileRoute("/admin/software/$id/")({
   head: () => ({
     meta: [
       { title: "Edit software — CodeMarket admin" },
-      { name: "description", content: "Update the details of an application in the CodeMarket catalog." },
+      {
+        name: "description",
+        content: "Update the details of an application in the CodeMarket catalog.",
+      },
       { property: "og:title", content: "Edit software — CodeMarket admin" },
       { property: "og:description", content: "Update a CodeMarket application listing." },
       { name: "robots", content: "noindex" },
@@ -68,10 +71,14 @@ function EditSoftware() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold">{data.software.name}</h1>
-          <p className="text-muted-foreground">Edit this listing. Downloads and likes are preserved.</p>
+          <p className="text-muted-foreground">
+            Edit this listing. Downloads and likes are preserved.
+          </p>
         </div>
         <Button asChild variant="outline">
-          <Link to="/admin/software/$id/versions" params={{ id }}>Manage versions</Link>
+          <Link to="/admin/software/$id/versions" params={{ id }}>
+            Manage versions
+          </Link>
         </Button>
       </div>
       <SoftwareForm initial={data.software} screenshots={data.screenshots} />

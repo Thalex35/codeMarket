@@ -15,13 +15,24 @@ export function normalizeStorageReference(reference: string | null | undefined):
   if (reference.startsWith("http") || reference.startsWith("/")) return reference;
 
   const normalized = reference.replace(/\\/g, "/").trim();
-  if (!normalized || normalized.includes("..") || normalized.startsWith("/") || normalized.includes("//")) {
+  if (
+    !normalized ||
+    normalized.includes("..") ||
+    normalized.startsWith("/") ||
+    normalized.includes("//")
+  ) {
     return null;
   }
 
   const [bucket, ...rest] = normalized.split("/");
   const path = rest.join("/");
-  if (!bucket || !ALLOWED_BUCKETS.has(bucket) || !path || path.startsWith("/") || path.includes("..")) {
+  if (
+    !bucket ||
+    !ALLOWED_BUCKETS.has(bucket) ||
+    !path ||
+    path.startsWith("/") ||
+    path.includes("..")
+  ) {
     return null;
   }
 
@@ -44,9 +55,14 @@ export function parseStorageObjectReference(
  * `bucket/path` storage key for admin uploads. Storage buckets are private, so
  * uploads are resolved through a signed URL.
  */
-export async function resolveImageUrl(reference: string | null | undefined): Promise<string | null> {
+export async function resolveImageUrl(
+  reference: string | null | undefined,
+): Promise<string | null> {
   const normalized = normalizeStorageReference(reference);
-  if (!normalized) return reference && (reference.startsWith("http") || reference.startsWith("/")) ? reference : null;
+  if (!normalized)
+    return reference && (reference.startsWith("http") || reference.startsWith("/"))
+      ? reference
+      : null;
   if (normalized.startsWith("http") || normalized.startsWith("/")) return normalized;
   if (cache.has(normalized)) return cache.get(normalized)!;
 
@@ -72,7 +88,9 @@ export async function uploadFile(bucket: string, path: string, file: File) {
   ) {
     throw new Error("Invalid storage path");
   }
-  const { error } = await supabase.storage.from(bucket).upload(normalizedPath, file, { upsert: true });
+  const { error } = await supabase.storage
+    .from(bucket)
+    .upload(normalizedPath, file, { upsert: true });
   if (error) throw error;
   return `${bucket}/${normalizedPath}`;
 }
@@ -97,7 +115,8 @@ export async function uploadFileWithProgress(
 
   const { data, error: sessionError } = await supabase.auth.refreshSession();
   const accessToken = data.session?.access_token;
-  if (sessionError || !accessToken) throw sessionError ?? new Error("You must be signed in to upload files");
+  if (sessionError || !accessToken)
+    throw sessionError ?? new Error("You must be signed in to upload files");
 
   const supabaseUrl = import.meta.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"];
   const publishableKey =
@@ -111,7 +130,8 @@ export async function uploadFileWithProgress(
     request.setRequestHeader("apikey", publishableKey);
     request.setRequestHeader("x-upsert", "true");
     request.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+      if (event.lengthComputable)
+        onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
     };
     const abortUpload = () => request.abort();
     signal?.addEventListener("abort", abortUpload, { once: true });
@@ -160,7 +180,10 @@ export async function downloadResponseWithProgress(
   fileName: string,
   onProgress: ProgressCallback,
 ) {
-  if (!response.ok || !response.body) throw new Error("The download failed");
+  if (!response.ok || !response.body) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(detail || `Download failed with HTTP ${response.status}`);
+  }
 
   const total = Number(response.headers.get("content-length")) || 0;
   const reader = response.body.getReader();

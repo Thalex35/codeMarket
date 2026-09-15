@@ -142,7 +142,11 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               </div>
               <NavLinks onNavigate={() => setOpen(false)} />
               <div className="border-t p-3">
-                <Button variant="ghost" className="w-full justify-start" onClick={() => void signOut()}>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => void signOut()}
+                >
                   <LogOut className="mr-2 h-4 w-4" aria-hidden />
                   Logout
                 </Button>

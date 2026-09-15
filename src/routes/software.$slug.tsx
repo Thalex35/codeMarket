@@ -146,7 +146,7 @@ function SoftwareDetail() {
 
   useEffect(() => {
     if (software) trackEvent("software_view", { softwareId: software.id });
-  }, [software?.id]);
+  }, [software]);
 
   if (isLoading) {
     return (
@@ -239,7 +239,10 @@ function SoftwareDetail() {
         version_id: currentVersion?.id ?? null,
       });
       if (error) throw error;
-      trackEvent("download", { softwareId: software.id, metadata: { version: currentVersion?.version } });
+      trackEvent("download", {
+        softwareId: software.id,
+        metadata: { version: currentVersion?.version },
+      });
       await queryClient.invalidateQueries({ queryKey: ["software"] });
 
       if (fileReference || remoteFileUrl) {
@@ -278,8 +281,10 @@ function SoftwareDetail() {
           "This demo listing has no installer attached yet. Your download has been recorded.",
         );
       }
-    } catch {
-      toast.error("The download failed. Please try again.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "The download failed. Please try again.",
+      );
     } finally {
       setBusy(false);
       if (completed) {
@@ -333,7 +338,9 @@ function SoftwareDetail() {
     try {
       const result = await createOfficialMonCashCheckout({ data: { softwareId: software.id } });
       if (result.alreadyPaid) {
-        await queryClient.invalidateQueries({ queryKey: ["purchase-access", software.id, user!.id] });
+        await queryClient.invalidateQueries({
+          queryKey: ["purchase-access", software.id, user!.id],
+        });
         toast.success("Your purchase is already confirmed.");
         setBuyOpen(false);
         return;
@@ -389,7 +396,11 @@ function SoftwareDetail() {
 
             <div className="mt-7 flex flex-wrap gap-3">
               {isPaid && !paidAccess?.paid ? (
-                <Button size="lg" disabled={busy} onClick={() => (user ? setBuyOpen(true) : setAuthPrompt(true))}>
+                <Button
+                  size="lg"
+                  disabled={busy}
+                  onClick={() => (user ? setBuyOpen(true) : setAuthPrompt(true))}
+                >
                   Get this software — {formatPrice(software.price, software.currency)}
                 </Button>
               ) : (
@@ -409,7 +420,10 @@ function SoftwareDetail() {
                 disabled={busy}
                 onClick={() => void toggleLike()}
               >
-                <Heart className={`mr-2 h-4 w-4 ${liked ? "fill-current text-brand" : ""}`} aria-hidden />
+                <Heart
+                  className={`mr-2 h-4 w-4 ${liked ? "fill-current text-brand" : ""}`}
+                  aria-hidden
+                />
                 {liked ? "Liked" : "Like"}
               </Button>
             </div>
