@@ -20,6 +20,7 @@ type AuthContextValue = {
   isActive: boolean;
   loading: boolean;
   onlineUserIds: string[];
+  presenceStatus: "connecting" | "connected" | "disconnected";
   refreshProfile: () => Promise<void>;
 };
 
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextValue>({
   isActive: false,
   loading: true,
   onlineUserIds: [],
+  presenceStatus: "disconnected",
   refreshProfile: async () => {},
 });
 
@@ -41,6 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isActive, setIsActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
+  const [presenceStatus, setPresenceStatus] = useState<"connecting" | "connected" | "disconnected">(
+    "disconnected",
+  );
 
   async function loadAccount(userId: string | undefined) {
     if (!userId) {
@@ -94,15 +99,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userId = session?.user.id;
     if (!userId) {
       setOnlineUserIds([]);
+      setPresenceStatus("disconnected");
       return;
     }
 
+    setPresenceStatus("connecting");
     const channel = supabase.channel("codemarket-presence", {
       config: { presence: { key: userId } },
     });
 
     const syncPresence = () => {
-      setOnlineUserIds(Object.keys(channel.presenceState()));
+      const state = channel.presenceState<{ user_id?: string }>();
+      const ids = Object.entries(state).flatMap(([key, presences]) =>
+        presences.map((presence) => presence.user_id ?? key),
+      );
+      setOnlineUserIds([...new Set(ids)]);
     };
 
     channel.on("presence", { event: "sync" }, syncPresence);
@@ -111,12 +122,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void channel.subscribe(async (status) => {
       if (status === "SUBSCRIBED") {
         await channel.track({ user_id: userId });
+        setPresenceStatus("connected");
         syncPresence();
+      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        setPresenceStatus("disconnected");
       }
     });
 
     return () => {
       setOnlineUserIds([]);
+      setPresenceStatus("disconnected");
       void supabase.removeChannel(channel);
     };
   }, [session?.user.id]);
@@ -130,9 +145,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isActive,
       loading,
       onlineUserIds,
+      presenceStatus,
       refreshProfile: () => loadAccount(session?.user.id),
     }),
-    [session, profile, isAdmin, isActive, loading, onlineUserIds],
+    [session, profile, isAdmin, isActive, loading, onlineUserIds, presenceStatus],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -26,7 +26,7 @@ export const Route = createFileRoute("/admin/users")({
 
 function AdminUsers() {
   const queryClient = useQueryClient();
-  const { onlineUserIds } = useAuth();
+  const { onlineUserIds, presenceStatus } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -85,9 +85,17 @@ function AdminUsers() {
             Manage account access and watch the network in real time.
           </p>
         </div>
-        <div className="flex w-fit items-center gap-2 rounded-full border border-success/20 bg-success/10 px-3 py-2 text-sm font-semibold text-success">
+        <div
+          className={`flex w-fit items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold ${
+            presenceStatus === "connected"
+              ? "border-success/20 bg-success/10 text-success"
+              : "border-warning/20 bg-warning/10 text-warning-foreground"
+          }`}
+        >
           <Wifi className="h-4 w-4" aria-hidden />
-          {onlineUserIds.length} online now
+          {presenceStatus === "connected"
+            ? `${onlineUserIds.length} online now`
+            : "Connecting live status"}
         </div>
       </div>
 
