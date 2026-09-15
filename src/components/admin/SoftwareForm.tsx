@@ -501,6 +501,21 @@ export function SoftwareForm({
             {version.file_path ? (
               <p className="text-xs text-muted-foreground">Uploaded: {version.file_path}</p>
             ) : null}
+            <div className="space-y-2">
+              <Label htmlFor="github-release-url">Or use a GitHub Release URL</Label>
+              <Input
+                id="github-release-url"
+                type="url"
+                placeholder="https://github.com/owner/repo/releases/download/..."
+                value={version.file_path.startsWith("http") ? version.file_path : ""}
+                onChange={(event) =>
+                  setVersion((prev) => ({ ...prev, file_path: event.target.value }))
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                Upload the installer to a GitHub Release first, then paste the asset URL here.
+              </p>
+            </div>
             {uploadedFiles.installer ? (
               <p className="text-sm font-medium text-emerald-700">
                 Upload complete: {uploadedFiles.installer.name} ({formatFileSize(uploadedFiles.installer.size)})

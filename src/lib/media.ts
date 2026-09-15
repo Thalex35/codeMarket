@@ -152,6 +152,14 @@ export async function downloadFileWithProgress(
   onProgress: ProgressCallback,
 ) {
   const response = await fetch(signedUrl);
+  return downloadResponseWithProgress(response, fileName, onProgress);
+}
+
+export async function downloadResponseWithProgress(
+  response: Response,
+  fileName: string,
+  onProgress: ProgressCallback,
+) {
   if (!response.ok || !response.body) throw new Error("The download failed");
 
   const total = Number(response.headers.get("content-length")) || 0;

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ function VersionsPage() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [editingVersionId, setEditingVersionId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [form, setForm] = useState({
@@ -103,18 +104,29 @@ function VersionsPage() {
     }
     setBusy(true);
     try {
-      await supabase.from("software_versions").update({ is_current: false }).eq("software_id", id);
-      const { error } = await supabase.from("software_versions").insert({
-        software_id: id,
+      const payload = {
         version: form.version.trim(),
         release_date: form.release_date,
         release_notes: form.release_notes || null,
         file_size: form.file_size || null,
         file_path: form.file_path || null,
         minimum_os: form.minimum_os || null,
-        is_current: true,
-      });
-      if (error) throw error;
+      };
+      if (editingVersionId) {
+        const { error } = await supabase
+          .from("software_versions")
+          .update(payload)
+          .eq("id", editingVersionId);
+        if (error) throw error;
+      } else {
+        await supabase.from("software_versions").update({ is_current: false }).eq("software_id", id);
+        const { error } = await supabase.from("software_versions").insert({
+          software_id: id,
+          ...payload,
+          is_current: true,
+        });
+        if (error) throw error;
+      }
       await queryClient.invalidateQueries({ queryKey: ["admin-versions", id] });
       setForm({
         version: "",
@@ -124,12 +136,27 @@ function VersionsPage() {
         file_path: "",
         minimum_os: "",
       });
-      toast.success("Version published.");
-    } catch {
-      toast.error("We couldn't add this version. Please try again.");
+      setEditingVersionId(null);
+      toast.success(editingVersionId ? "Version updated." : "Version published.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "We couldn't save this version.";
+      toast.error(message);
     } finally {
       setBusy(false);
     }
+  }
+
+  function editVersion(item: SoftwareVersion) {
+    setEditingVersionId(item.id);
+    setForm({
+      version: item.version,
+      release_date: item.release_date ?? new Date().toISOString().slice(0, 10),
+      release_notes: item.release_notes ?? "",
+      file_size: item.file_size ?? "",
+      file_path: item.file_path ?? "",
+      minimum_os: item.minimum_os ?? "",
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function makeCurrent(versionId: string) {
@@ -146,6 +173,25 @@ function VersionsPage() {
     toast.success("Current version updated.");
   }
 
+  async function removeVersion(item: SoftwareVersion) {
+    if (item.is_current) {
+      toast.error("Set another version as current before deleting this version.");
+      return;
+    }
+    if (!window.confirm(`Delete version ${item.version}? This cannot be undone.`)) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("software_versions").delete().eq("id", item.id);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["admin-versions", id] });
+      toast.success(`Version ${item.version} deleted.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We couldn't delete this version.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -160,6 +206,11 @@ function VersionsPage() {
 
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Add a version</h2>
+        {editingVersionId ? (
+          <p className="rounded-md bg-accent px-3 py-2 text-sm text-accent-foreground">
+            Editing an existing version. Update the GitHub Release URL or other details, then save.
+          </p>
+        ) : null}
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="version">Version number</Label>
@@ -207,6 +258,16 @@ function VersionsPage() {
             onChange={(event) => setForm((prev) => ({ ...prev, release_notes: event.target.value }))}
           />
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="github-release-url">GitHub Release asset URL</Label>
+          <Input
+            id="github-release-url"
+            type="url"
+            placeholder="https://github.com/owner/repo/releases/download/.../installer.exe"
+            value={form.file_path.startsWith("http") ? form.file_path : ""}
+            onChange={(event) => setForm((prev) => ({ ...prev, file_path: event.target.value }))}
+          />
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           {uploading && uploadProgress !== null ? (
             <ProgressPanel
@@ -231,8 +292,19 @@ function VersionsPage() {
           ) : null}
           <Button disabled={busy} onClick={() => void addVersion()}>
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
-            Add version
+            {editingVersionId ? "Save version" : "Add version"}
           </Button>
+          {editingVersionId ? (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setEditingVersionId(null);
+                setForm({ version: "", release_date: new Date().toISOString().slice(0, 10), release_notes: "", file_size: "", file_path: "", minimum_os: "" });
+              }}
+            >
+              Cancel edit
+            </Button>
+          ) : null}
         </div>
       </section>
 
@@ -263,6 +335,19 @@ function VersionsPage() {
                   Set as current
                 </Button>
               ) : null}
+              <Button size="sm" variant="ghost" onClick={() => editVersion(item)}>
+                Edit
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-destructive hover:text-destructive"
+                aria-label={`Delete version ${item.version}`}
+                onClick={() => void removeVersion(item)}
+                disabled={busy || item.is_current}
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+              </Button>
             </div>
           ))
         )}
