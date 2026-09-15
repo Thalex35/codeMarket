@@ -7,6 +7,12 @@ function unauthorized() {
   return new Response("Unauthorized", { status: 401 });
 }
 
+function mobileDevice(request: Request) {
+  return /android|iphone|ipod|ipad|mobile|windows phone/i.test(
+    request.headers.get("user-agent") ?? "",
+  );
+}
+
 async function resolveGitHubAsset(url: URL) {
   if (url.pathname.includes("/releases/download/")) return url;
   const match = url.pathname.match(/^\/([^/]+)\/([^/]+)\/releases\/tag\/([^/]+)$/);
@@ -31,6 +37,12 @@ export const Route = createFileRoute("/api/software/download")({
   server: {
     handlers: {
       GET: async ({ request }) => {
+        if (mobileDevice(request)) {
+          return new Response("Please open CodeMarket on a PC to download software.", {
+            status: 403,
+            headers: { "Content-Type": "text/plain; charset=utf-8" },
+          });
+        }
         const authorization = request.headers.get("authorization");
         if (!authorization?.startsWith("Bearer ")) return unauthorized();
 

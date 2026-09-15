@@ -13,6 +13,7 @@ import {
   PackageSearch,
   ShieldCheck,
   Sparkles,
+  Smartphone,
   Tag,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -47,6 +48,7 @@ import {
   parseStorageObjectReference,
 } from "@/lib/media";
 import { createOfficialMonCashCheckout } from "@/lib/official-moncash.functions";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/software/$slug")({
   loader: ({ params }) => getSoftwareMeta({ data: { slug: params.slug } }),
@@ -101,6 +103,7 @@ function SoftwareDetail() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { settings } = useSiteSettings();
+  const isMobile = useIsMobile();
 
   const { data: software, isLoading } = useSoftwareBySlug(slug);
   const { data: versions = [] } = useSoftwareVersions(software?.id);
@@ -179,6 +182,7 @@ function SoftwareDetail() {
   }
 
   const isPaid = software.pricing_type === "paid";
+  const downloadBlockedOnMobile = isMobile;
 
   function requireAuth() {
     if (user) return true;
@@ -216,6 +220,10 @@ function SoftwareDetail() {
 
   async function startDownload() {
     if (!requireAuth() || !software) return;
+    if (downloadBlockedOnMobile) {
+      toast.info("Please open CodeMarket on your PC to download software.");
+      return;
+    }
     if (isPaid && !paidAccess?.paid) {
       setBuyOpen(true);
       return;
@@ -384,7 +392,7 @@ function SoftwareDetail() {
             <h1 className="mt-4 font-display text-3xl font-bold sm:text-4xl">{software.name}</h1>
             <p className="mt-3 text-muted-foreground">{software.short_description}</p>
 
-            <div className="mt-5 flex gap-6 text-sm text-muted-foreground">
+            <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Heart className="h-4 w-4" aria-hidden /> {formatCount(software.like_count)} likes
               </span>
@@ -404,13 +412,21 @@ function SoftwareDetail() {
                   Get this software â€” {formatPrice(software.price, software.currency)}
                 </Button>
               ) : (
-                <Button size="lg" disabled={busy} onClick={() => void startDownload()}>
+                <Button
+                  size="lg"
+                  disabled={busy || downloadBlockedOnMobile}
+                  onClick={() => void startDownload()}
+                >
                   {busy ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
                   ) : (
                     <Download className="mr-2 h-4 w-4" aria-hidden />
                   )}
-                  {isPaid ? "Download" : "Download free"}
+                  {downloadBlockedOnMobile
+                    ? "Download on PC"
+                    : isPaid
+                      ? "Download"
+                      : "Download free"}
                 </Button>
               )}
 
@@ -427,6 +443,19 @@ function SoftwareDetail() {
                 {liked ? "Liked" : "Like"}
               </Button>
             </div>
+
+            {downloadBlockedOnMobile ? (
+              <div className="mt-4 flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning-foreground">
+                <Smartphone className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+                <div>
+                  <p className="font-semibold">Downloads work best on a PC</p>
+                  <p className="mt-1 leading-relaxed">
+                    Keep your account and open this software page on your Windows, macOS, or Linux
+                    computer to download the installer.
+                  </p>
+                </div>
+              </div>
+            ) : null}
 
             {downloadProgress !== null ? (
               <ProgressPanel
