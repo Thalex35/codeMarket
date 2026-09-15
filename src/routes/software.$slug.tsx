@@ -38,6 +38,7 @@ import { useScreenshots, useSoftwareBySlug, useSoftwareVersions } from "@/hooks/
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import { formatCount, formatDate, formatPrice } from "@/lib/catalog";
+import { buildWhatsAppPurchaseMessage, getPurchaseAccessState } from "@/lib/purchase-flow";
 import { getSoftwareMeta } from "@/lib/public.functions";
 import {
   downloadFileWithProgress,
@@ -53,12 +54,12 @@ export const Route = createFileRoute("/software/$slug")({
     if (!loaderData) {
       return {
         meta: [
-          { title: "Software not found — CodeMarket" },
+          { title: "Software not found â€” CodeMarket" },
           { name: "robots", content: "noindex" },
         ],
       };
     }
-    const title = `${loaderData.name} — ${loaderData.category} software on CodeMarket`;
+    const title = `${loaderData.name} â€” ${loaderData.category} software on CodeMarket`;
     return {
       meta: [
         { title },
@@ -137,10 +138,8 @@ function SoftwareDetail() {
         .eq("software_id", software!.id)
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
-      return {
-        paid: (data ?? []).some((row) => row.status === "paid"),
-        pending: (data ?? []).some((row) => row.status === "pending"),
-      };
+
+      return getPurchaseAccessState(data ?? []);
     },
   });
 
@@ -318,13 +317,14 @@ function SoftwareDetail() {
         toast.info("Your request was saved. The CodeMarket team will contact you by email.");
         return;
       }
-      const message = `Hello CodeMarket, I would like to buy ${software.name} (version ${
-        currentVersion?.version ?? "latest"
-      }) for ${formatPrice(software.price, software.currency)}. My name is ${
-        user!.user_metadata?.["full_name"] ?? user!.email
-      }.`;
+      const message = buildWhatsAppPurchaseMessage({
+        softwareName: software.name,
+        version: currentVersion?.version ?? "latest",
+        price: software.price,
+        currency: software.currency,
+        customerName: user!.user_metadata?.["full_name"] ?? user!.email ?? "Customer",
+      });
       window.open(buildWhatsAppLink(number, message), "_blank", "noopener,noreferrer");
-      await startMonCashCheckout(); // Call to the new MonCash checkout function
     } catch {
       toast.error("We couldn't save your request. Please try again.");
     } finally {
@@ -401,7 +401,7 @@ function SoftwareDetail() {
                   disabled={busy}
                   onClick={() => (user ? setBuyOpen(true) : setAuthPrompt(true))}
                 >
-                  Get this software — {formatPrice(software.price, software.currency)}
+                  Get this software â€” {formatPrice(software.price, software.currency)}
                 </Button>
               ) : (
                 <Button size="lg" disabled={busy} onClick={() => void startDownload()}>
@@ -521,7 +521,7 @@ function SoftwareDetail() {
                         ) : null}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {formatDate(version.release_date)} · {version.file_size ?? "—"}
+                        {formatDate(version.release_date)} Â· {version.file_size ?? "â€”"}
                       </span>
                     </div>
                     {version.release_notes ? (
@@ -542,7 +542,7 @@ function SoftwareDetail() {
                 <dt className="flex items-center gap-2 text-muted-foreground">
                   <Tag className="h-4 w-4" aria-hidden /> Version
                 </dt>
-                <dd className="font-medium">{currentVersion?.version ?? "—"}</dd>
+                <dd className="font-medium">{currentVersion?.version ?? "â€”"}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="flex items-center gap-2 text-muted-foreground">
@@ -554,7 +554,7 @@ function SoftwareDetail() {
                 <dt className="flex items-center gap-2 text-muted-foreground">
                   <HardDrive className="h-4 w-4" aria-hidden /> File size
                 </dt>
-                <dd className="font-medium">{currentVersion?.file_size ?? "—"}</dd>
+                <dd className="font-medium">{currentVersion?.file_size ?? "â€”"}</dd>
               </div>
             </dl>
             {currentVersion?.release_notes ? (
