@@ -39,7 +39,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import { formatCount, formatDate, formatPrice } from "@/lib/catalog";
 import { getSoftwareMeta } from "@/lib/public.functions";
-import { downloadFileWithProgress, fileNameFrom, parseStorageObjectReference } from "@/lib/media";
+import {
+  downloadFileWithProgress,
+  downloadResponseWithProgress,
+  fileNameFrom,
+  parseStorageObjectReference,
+} from "@/lib/media";
 import { createOfficialMonCashCheckout } from "@/lib/official-moncash.functions";
 
 export const Route = createFileRoute("/software/$slug")({
@@ -217,7 +222,10 @@ function SoftwareDetail() {
       return;
     }
     const fileReference = parseStorageObjectReference(currentVersion?.file_path);
-    if (currentVersion?.file_path && !fileReference) {
+    const remoteFileUrl = currentVersion?.file_path?.trim().startsWith("http")
+      ? currentVersion.file_path.trim()
+      : null;
+    if (currentVersion?.file_path && !fileReference && !remoteFileUrl) {
       toast.error("This download is temporarily unavailable. Please contact support.");
       return;
     }
@@ -234,14 +242,33 @@ function SoftwareDetail() {
       trackEvent("download", { softwareId: software.id, metadata: { version: currentVersion?.version } });
       await queryClient.invalidateQueries({ queryKey: ["software"] });
 
-      if (fileReference) {
-        const { data, error: fileError } = await supabase.storage
-          .from(fileReference.bucket)
-          .createSignedUrl(fileReference.path, 120, { download: true });
-        if (fileError || !data?.signedUrl) throw fileError ?? new Error("no url");
+      if (fileReference || remoteFileUrl) {
+        if (remoteFileUrl) {
+          const { data: session } = await supabase.auth.getSession();
+          const response = await fetch(
+            `/api/software/download?versionId=${encodeURIComponent(currentVersion?.id ?? "")}`,
+            { headers: { Authorization: `Bearer ${session.session?.access_token ?? ""}` } },
+          );
+          await downloadResponseWithProgress(
+            response,
+            fileNameFrom(remoteFileUrl) || `${software.slug}-download`,
+            setDownloadProgress,
+          );
+          completed = true;
+          toast.success("Your download is starting.");
+          return;
+        }
+        let downloadUrl = remoteFileUrl;
+        if (fileReference) {
+          const { data, error: fileError } = await supabase.storage
+            .from(fileReference.bucket)
+            .createSignedUrl(fileReference.path, 120, { download: true });
+          if (fileError || !data?.signedUrl) throw fileError ?? new Error("no url");
+          downloadUrl = data.signedUrl;
+        }
         await downloadFileWithProgress(
-          data.signedUrl,
-          fileNameFrom(fileReference.path) || `${software.slug}-download`,
+          downloadUrl!,
+          fileNameFrom(fileReference?.path ?? remoteFileUrl) || `${software.slug}-download`,
           setDownloadProgress,
         );
         completed = true;

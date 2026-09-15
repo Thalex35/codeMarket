@@ -34,6 +34,7 @@ import { Route as SoftwareIndexRouteImport } from './routes/software.index'
 import { Route as SoftwareSlugRouteImport } from './routes/software.$slug'
 import { Route as AdminSoftwareIndexRouteImport } from './routes/admin.software.index'
 import { Route as AdminSoftwareNewRouteImport } from './routes/admin.software.new'
+import { Route as ApiSoftwareDownloadRouteImport } from './routes/api.software.download'
 import { Route as AdminSoftwareIdIndexRouteImport } from './routes/admin.software.$id.index'
 import { Route as AdminSoftwareIdVersionsRouteImport } from './routes/admin.software.$id.versions'
 import { Route as ApiPaymentsMoncashNotificationRouteImport } from './routes/api.payments.moncash.notification'
@@ -162,6 +163,11 @@ const AdminSoftwareNewRoute = AdminSoftwareNewRouteImport.update({
   path: '/software/new',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiSoftwareDownloadRoute = ApiSoftwareDownloadRouteImport.update({
+  id: '/api/software/download',
+  path: '/api/software/download',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSoftwareIdIndexRoute = AdminSoftwareIdIndexRouteImport.update({
   id: '/software/$id/',
   path: '/software/$id/',
@@ -203,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/software/': typeof SoftwareIndexRoute
   '/admin/software/new': typeof AdminSoftwareNewRoute
+  '/api/software/download': typeof ApiSoftwareDownloadRoute
   '/admin/software/': typeof AdminSoftwareIndexRoute
   '/admin/software/$id/versions': typeof AdminSoftwareIdVersionsRoute
   '/api/payments/moncash/notification': typeof ApiPaymentsMoncashNotificationRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/software': typeof SoftwareIndexRoute
   '/admin/software/new': typeof AdminSoftwareNewRoute
+  '/api/software/download': typeof ApiSoftwareDownloadRoute
   '/admin/software': typeof AdminSoftwareIndexRoute
   '/admin/software/$id/versions': typeof AdminSoftwareIdVersionsRoute
   '/api/payments/moncash/notification': typeof ApiPaymentsMoncashNotificationRoute
@@ -262,6 +270,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/software/': typeof SoftwareIndexRoute
   '/admin/software/new': typeof AdminSoftwareNewRoute
+  '/api/software/download': typeof ApiSoftwareDownloadRoute
   '/admin/software/': typeof AdminSoftwareIndexRoute
   '/admin/software/$id/versions': typeof AdminSoftwareIdVersionsRoute
   '/api/payments/moncash/notification': typeof ApiPaymentsMoncashNotificationRoute
@@ -293,6 +302,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/software/'
     | '/admin/software/new'
+    | '/api/software/download'
     | '/admin/software/'
     | '/admin/software/$id/versions'
     | '/api/payments/moncash/notification'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/software'
     | '/admin/software/new'
+    | '/api/software/download'
     | '/admin/software'
     | '/admin/software/$id/versions'
     | '/api/payments/moncash/notification'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/software/'
     | '/admin/software/new'
+    | '/api/software/download'
     | '/admin/software/'
     | '/admin/software/$id/versions'
     | '/api/payments/moncash/notification'
@@ -368,6 +380,7 @@ export interface RootRouteChildren {
   PaymentCompleteRoute: typeof PaymentCompleteRoute
   SoftwareSlugRoute: typeof SoftwareSlugRoute
   SoftwareIndexRoute: typeof SoftwareIndexRoute
+  ApiSoftwareDownloadRoute: typeof ApiSoftwareDownloadRoute
   ApiPaymentsMoncashNotificationRoute: typeof ApiPaymentsMoncashNotificationRoute
 }
 
@@ -548,6 +561,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSoftwareNewRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/software/download': {
+      id: '/api/software/download'
+      path: '/api/software/download'
+      fullPath: '/api/software/download'
+      preLoaderRoute: typeof ApiSoftwareDownloadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/software/$id/': {
       id: '/admin/software/$id/'
       path: '/software/$id'
@@ -634,6 +654,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentCompleteRoute: PaymentCompleteRoute,
   SoftwareSlugRoute: SoftwareSlugRoute,
   SoftwareIndexRoute: SoftwareIndexRoute,
+  ApiSoftwareDownloadRoute: ApiSoftwareDownloadRoute,
   ApiPaymentsMoncashNotificationRoute: ApiPaymentsMoncashNotificationRoute,
 }
 export const routeTree = rootRouteImport
