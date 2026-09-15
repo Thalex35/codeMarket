@@ -27,6 +27,7 @@ export const Route = createFileRoute("/admin/users")({
 function AdminUsers() {
   const queryClient = useQueryClient();
   const { user, onlineUserIds, presenceStatus } = useAuth();
+  const protectedAdminEmail = "admin@user.dev";
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -144,76 +145,84 @@ function AdminUsers() {
               </tr>
             </thead>
             <tbody>
-              {data.map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-b transition-colors last:border-0 hover:bg-muted/25"
-                >
-                  <td className="p-3 font-medium">
-                    <div className="flex items-center gap-3">
-                      <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 font-display text-sm font-bold text-primary">
-                        {(row.full_name ?? row.email ?? "U").slice(0, 1).toUpperCase()}
-                        {onlineUserIds.includes(row.id) ? (
-                          <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-success" />
-                        ) : null}
-                      </span>
-                      <span>{row.full_name ?? "Unnamed user"}</span>
-                    </div>
-                  </td>
-                  <td className="p-3">{row.email}</td>
-                  <td className="p-3">{formatDate(row.created_at)}</td>
-                  <td className="p-3">{row.downloads}</td>
-                  <td className="p-3">{row.likes}</td>
-                  <td className="p-3">{row.purchases}</td>
-                  <td className="p-3">
-                    <Badge
-                      className={
-                        row.status === "active"
-                          ? "border-success/20 bg-success/10 text-success"
-                          : ""
-                      }
-                      variant={row.status === "active" ? "outline" : "destructive"}
+              {data.map((row) =>
+                (() => {
+                  const isProtectedAdmin = row.email?.toLowerCase() === protectedAdminEmail;
+                  return (
+                    <tr
+                      key={row.id}
+                      className="border-b transition-colors last:border-0 hover:bg-muted/25"
                     >
-                      <Circle className="mr-1 h-2.5 w-2.5 fill-current" aria-hidden />
-                      {row.status === "active" ? "Active" : "Disabled"}
-                    </Badge>
-                  </td>
-                  <td className="p-3">
-                    <Badge
-                      variant={row.role === "admin" ? "default" : "outline"}
-                      className={row.role === "admin" ? "bg-primary/90" : ""}
-                    >
-                      <ShieldCheck className="mr-1 h-3 w-3" aria-hidden />
-                      {row.role === "admin" ? "Admin" : "User"}
-                    </Badge>
-                  </td>
-                  <td className="p-3">
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          void setStatus(row.id, row.status === "active" ? "disabled" : "active")
-                        }
-                      >
-                        {row.status === "active" ? "Disable" : "Enable"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={row.role === "admin" ? "secondary" : "default"}
-                        disabled={
-                          row.email?.toLowerCase() === "admin@user.dev" || row.id === user?.id
-                        }
-                        onClick={() =>
-                          void setRole(row.id, row.role === "admin" ? "user" : "admin")
-                        }
-                      >
-                        {row.role === "admin" ? "Make user" : "Make admin"}
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      <td className="p-3 font-medium">
+                        <div className="flex items-center gap-3">
+                          <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 font-display text-sm font-bold text-primary">
+                            {(row.full_name ?? row.email ?? "U").slice(0, 1).toUpperCase()}
+                            {onlineUserIds.includes(row.id) ? (
+                              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-success" />
+                            ) : null}
+                          </span>
+                          <span>{row.full_name ?? "Unnamed user"}</span>
+                        </div>
+                      </td>
+                      <td className="p-3">{row.email}</td>
+                      <td className="p-3">{formatDate(row.created_at)}</td>
+                      <td className="p-3">{row.downloads}</td>
+                      <td className="p-3">{row.likes}</td>
+                      <td className="p-3">{row.purchases}</td>
+                      <td className="p-3">
+                        <Badge
+                          className={
+                            row.status === "active"
+                              ? "border-success/20 bg-success/10 text-success"
+                              : ""
+                          }
+                          variant={row.status === "active" ? "outline" : "destructive"}
+                        >
+                          <Circle className="mr-1 h-2.5 w-2.5 fill-current" aria-hidden />
+                          {row.status === "active" ? "Active" : "Disabled"}
+                        </Badge>
+                      </td>
+                      <td className="p-3">
+                        <Badge
+                          variant={row.role === "admin" ? "default" : "outline"}
+                          className={row.role === "admin" ? "bg-primary/90" : ""}
+                        >
+                          <ShieldCheck className="mr-1 h-3 w-3" aria-hidden />
+                          {row.role === "admin" ? "Admin" : "User"}
+                        </Badge>
+                      </td>
+                      <td className="p-3">
+                        {isProtectedAdmin ? null : (
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                void setStatus(
+                                  row.id,
+                                  row.status === "active" ? "disabled" : "active",
+                                )
+                              }
+                            >
+                              {row.status === "active" ? "Disable" : "Enable"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={row.role === "admin" ? "secondary" : "default"}
+                              disabled={row.id === user?.id}
+                              onClick={() =>
+                                void setRole(row.id, row.role === "admin" ? "user" : "admin")
+                              }
+                            >
+                              {row.role === "admin" ? "Make user" : "Make admin"}
+                            </Button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })(),
+              )}
             </tbody>
           </table>
         </div>
