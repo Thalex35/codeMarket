@@ -52,8 +52,8 @@ export function parseStorageObjectReference(
 
 /**
  * Image references are stored either as a plain URL (seed/CDN assets) or as a
- * `bucket/path` storage key for admin uploads. Storage buckets are private, so
- * uploads are resolved through a signed URL.
+ * `bucket/path` storage key for admin uploads. Catalog media is public, so it
+ * is resolved through a stable public URL.
  */
 export async function resolveImageUrl(
   reference: string | null | undefined,
@@ -68,6 +68,12 @@ export async function resolveImageUrl(
 
   const object = parseStorageObjectReference(normalized);
   if (!object) return null;
+
+  if (object.bucket === "covers" || object.bucket === "screenshots") {
+    const { data } = supabase.storage.from(object.bucket).getPublicUrl(object.path);
+    cache.set(normalized, data.publicUrl);
+    return data.publicUrl;
+  }
 
   const { data, error } = await supabase.storage
     .from(object.bucket)
