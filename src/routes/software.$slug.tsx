@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Monitor,
   PackageSearch,
+  Pencil,
   ShieldCheck,
   Sparkles,
   Smartphone,
@@ -102,7 +103,7 @@ function SoftwareDetail() {
   const { slug } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { settings } = useSiteSettings();
   const isMobile = useIsMobile();
 
@@ -392,7 +393,17 @@ function SoftwareDetail() {
               </Badge> : null}
             </div>
 
-            <h1 className="mt-4 font-display text-3xl font-bold sm:text-4xl">{software.name}</h1>
+            <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+              <h1 className="font-display text-3xl font-bold sm:text-4xl">{software.name}</h1>
+              {isAdmin ? (
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/admin/software/$id" params={{ id: software.id }}>
+                    <Pencil className="mr-2 h-4 w-4" aria-hidden />
+                    Edit
+                  </Link>
+                </Button>
+              ) : null}
+            </div>
             <p className="mt-3 text-muted-foreground">{software.short_description}</p>
 
             <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">

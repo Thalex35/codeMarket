@@ -129,6 +129,7 @@ export async function uploadFileWithProgress(
     request.setRequestHeader("Authorization", `Bearer ${accessToken}`);
     request.setRequestHeader("apikey", publishableKey);
     request.setRequestHeader("x-upsert", "true");
+    if (file.type) request.setRequestHeader("Content-Type", file.type);
     request.upload.onprogress = (event) => {
       if (event.lengthComputable)
         onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));

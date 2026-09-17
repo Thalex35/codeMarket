@@ -285,7 +285,7 @@ export function SoftwareForm({
           if (versionError) throw versionError;
         } else if (isWeb) {
           const { error: versionError } = await supabase.from("software_versions").insert({
-            software_id: softwareId,
+            software_id: softwareId!,
             version: "web",
             release_date: new Date().toISOString().slice(0, 10),
             file_path: version.file_path.trim(),
@@ -305,7 +305,7 @@ export function SoftwareForm({
 
         if (isWeb || version.version) {
           await supabase.from("software_versions").insert({
-            software_id: softwareId,
+            software_id: softwareId!,
             version: isWeb ? "web" : version.version,
             release_date: isWeb ? new Date().toISOString().slice(0, 10) : version.release_date,
             release_notes: isWeb ? null : version.release_notes || null,
@@ -318,7 +318,7 @@ export function SoftwareForm({
 
       const newShots = screenshots.filter((shot) => !shot.id);
       if (softwareId && newShots.length) {
-        await supabase.from("software_screenshots").insert(
+        const { error: screenshotsError } = await supabase.from("software_screenshots").insert(
           newShots.map((shot, index) => ({
             software_id: softwareId!,
             image_url: shot.image_url,
@@ -326,6 +326,7 @@ export function SoftwareForm({
             sort_order: screenshots.length - newShots.length + index,
           })),
         );
+        if (screenshotsError) throw screenshotsError;
       }
 
       toast.success(publish ? "Software published." : "Draft saved.");
@@ -425,7 +426,11 @@ export function SoftwareForm({
                 setForm((prev) => ({ ...prev, platform: value }));
                 if (value === "Web") {
                   setVersion((prev) => ({ ...prev, file_path: "" }));
-                  setUploadedFiles((prev) => ({ ...prev, installer: undefined }));
+                  setUploadedFiles((prev) => {
+                    const next = { ...prev };
+                    delete next.installer;
+                    return next;
+                  });
                 }
               }}
             >
