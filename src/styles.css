@@ -236,6 +236,18 @@
   background-color: #000000;
 }
 
+.admin-shell.light .admin-content {
+  color: #1f2937;
+}
+
+.admin-shell.light .admin-content .text-muted-foreground {
+  color: #4b5563;
+}
+
+.admin-shell.light .admin-content .text-foreground {
+  color: #1f2937;
+}
+
 .admin-shell.dark .bg-card {
   color: #ffffff;
   border-color: #374151;
