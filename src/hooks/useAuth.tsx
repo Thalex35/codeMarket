@@ -54,6 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsActive(false);
       return;
     }
+    setProfile(null);
+    setIsAdmin(false);
+    setIsActive(false);
     const [{ data: profileRow }, { data: adminFlag }] = await Promise.all([
       supabase
         .from("profiles")
@@ -79,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!active) return;
+        setLoading(true);
       setSession(nextSession);
       void loadAccount(nextSession?.user.id).finally(() => setLoading(false));
     });

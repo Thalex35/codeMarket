@@ -95,7 +95,10 @@ function AdminUserDetail() {
 
   async function deleteUser() {
     if (role === "admin" || !window.confirm(`Delete ${profile.full_name ?? profile.email}? This cannot be undone.`)) return;
-    const { error } = await supabase.from("profiles").delete().eq("id", id);
+    const { error } = await supabase.rpc(
+      "admin_delete_user" as never,
+      { _user_id: id } as never,
+    );
     if (error) { setStatusMessage("The user could not be deleted."); return; }
     await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     await navigate({ to: "/admin/users" });
