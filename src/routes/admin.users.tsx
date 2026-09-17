@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Circle, ShieldCheck, Users, Wifi } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ export const Route = createFileRoute("/admin/users")({
 
 function AdminUsers() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { user, onlineUserIds, presenceStatus } = useAuth();
   const protectedAdminEmail = "admin@user.dev";
 
@@ -148,7 +149,15 @@ function AdminUsers() {
                   return (
                     <tr
                       key={row.id}
-                      className="border-b transition-colors last:border-0 hover:bg-muted/25"
+                      tabIndex={0}
+                      className="cursor-pointer border-b transition-colors last:border-0 hover:bg-muted/25 focus:bg-muted/25 focus:outline-none"
+                      onClick={() => void navigate({ to: "/admin/users/$id", params: { id: row.id } })}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          void navigate({ to: "/admin/users/$id", params: { id: row.id } });
+                        }
+                      }}
                     >
                       <td className="p-3 font-medium">
                         <div className="flex items-center gap-3">
@@ -188,20 +197,16 @@ function AdminUsers() {
                       <td className="p-3">
                         {isProtectedAdmin ? null : (
                           <div className="flex flex-wrap gap-2">
-                            <Button asChild size="sm" variant="outline">
-                              <Link to="/admin/users/$id" params={{ id: row.id }}>
-                                View
-                              </Link>
-                            </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() =>
+                              onClick={(event) => {
+                                event.stopPropagation();
                                 void setStatus(
                                   row.id,
                                   row.status === "active" ? "disabled" : "active",
-                                )
-                              }
+                                );
+                              }}
                             >
                               {row.status === "active" ? "Disable" : "Enable"}
                             </Button>
@@ -209,9 +214,10 @@ function AdminUsers() {
                               size="sm"
                               variant={row.role === "admin" ? "secondary" : "default"}
                               disabled={row.id === user?.id}
-                              onClick={() =>
-                                void setRole(row.id, row.role === "admin" ? "user" : "admin")
-                              }
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void setRole(row.id, row.role === "admin" ? "user" : "admin");
+                              }}
                             >
                               {row.role === "admin" ? "Make user" : "Make admin"}
                             </Button>
