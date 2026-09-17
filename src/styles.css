@@ -257,6 +257,47 @@
   color: #d1d5db;
 }
 
+.dashboard-hero {
+  box-shadow: 0 18px 48px -28px rgb(20 92 190 / 45%);
+}
+
+.admin-shell.dark .dashboard-hero {
+  background:
+    radial-gradient(circle at 92% 12%, rgb(59 130 246 / 24%), transparent 22rem),
+    linear-gradient(135deg, #172943, #14243c 70%, #10203a);
+  border-color: #37649a;
+}
+
+.dashboard-kpi {
+  isolation: isolate;
+}
+
+.dashboard-kpi::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(135deg, rgb(59 130 246 / 9%), transparent 48%);
+  content: "";
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.dashboard-kpi:hover::before {
+  opacity: 1;
+}
+
+.dashboard-kpi:hover {
+  border-color: rgb(59 130 246 / 65%);
+}
+
+.dashboard-kpi .text-primary {
+  transition: transform 0.2s ease;
+}
+
+.dashboard-kpi:hover .text-primary {
+  transform: scale(1.12);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);

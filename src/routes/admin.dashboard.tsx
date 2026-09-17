@@ -141,7 +141,7 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-xl border bg-card p-6 sm:p-8">
+      <div className="dashboard-hero relative overflow-hidden rounded-2xl border bg-card p-6 sm:p-8">
         <div className="relative z-10 max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
             Command center
@@ -164,7 +164,10 @@ function AdminDashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
-          <div key={card.label} className="card-elevated rounded-2xl border bg-card p-5">
+          <div
+            key={card.label}
+            className="dashboard-kpi card-elevated card-elevated-hover group relative overflow-hidden rounded-2xl border bg-card p-5"
+          >
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">{card.label}</p>
               <card.icon className="h-4 w-4 text-primary" aria-hidden />
