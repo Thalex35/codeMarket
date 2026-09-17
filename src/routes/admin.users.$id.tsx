@@ -1,13 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Circle, CreditCard, Download, Heart, ShieldCheck, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarCheck2,
+  CheckCircle2,
+  Clock3,
+  Mail,
+  ShieldCheck,
+  Trash2,
+  UserRound,
+  Users,
+  Volume2,
+} from "lucide-react";
 
 import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDate, formatPrice } from "@/lib/catalog";
+import { formatDate } from "@/lib/catalog";
 
 export const Route = createFileRoute("/admin/users/$id")({
   head: () => ({
@@ -79,105 +90,161 @@ function AdminUserDetail() {
 
   const { profile, role, downloads, likes, purchases } = data;
 
+  const connectionText = "Last connection 6h ago";
+  const onboardingText = profile.status === "active" ? "Completed" : "Not completed";
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Customer</p>
-          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight">
-            {profile.full_name ?? "Unnamed user"}
-          </h1>
-        </div>
-        <Button asChild variant="outline">
-          <Link to="/admin/users">
-            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
-            Back to users
-          </Link>
-        </Button>
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+      <Button asChild variant="ghost" className="mb-6 h-auto px-0 text-base text-foreground hover:bg-transparent">
+        <Link to="/admin/users" className="inline-flex items-center gap-2">
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Back to users
+        </Link>
+      </Button>
+
+      <div className="mb-6 space-y-2">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-muted-foreground">
+          Administration
+        </p>
+        <h1 className="font-display text-4xl font-bold tracking-tight leading-none text-foreground">
+          {profile.full_name ?? "Unnamed user"}
+        </h1>
+        <p className="text-lg text-muted-foreground">{profile.email}</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
-        <div className="rounded-2xl border bg-card p-6 shadow-(--shadow-card)">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 font-display text-lg font-bold text-primary">
-              {(profile.full_name ?? profile.email ?? "U").slice(0, 1).toUpperCase()}
-            </div>
-            <div>
-              <p className="font-medium">{profile.full_name ?? "Unnamed user"}</p>
-              <p className="text-sm text-muted-foreground">{profile.email}</p>
-            </div>
-          </div>
+      <div className="mb-8 flex flex-wrap items-center gap-3">
+        <Badge
+          className={
+            profile.status === "active"
+              ? "border-success/20 bg-success/10 text-success"
+              : "border-muted-foreground/20 bg-muted/30 text-foreground"
+          }
+          variant={profile.status === "active" ? "outline" : "secondary"}
+        >
+          {profile.status === "active" ? "approved" : "suspended"}
+        </Badge>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border bg-muted/30 p-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
-              <div className="mt-2">
-                <Badge
-                  className={
-                    profile.status === "active"
-                      ? "border-success/20 bg-success/10 text-success"
-                      : ""
-                  }
-                  variant={profile.status === "active" ? "outline" : "destructive"}
-                >
-                  <Circle className="mr-1 h-2.5 w-2.5 fill-current" aria-hidden />
-                  {profile.status === "active" ? "Active" : "Disabled"}
-                </Badge>
-              </div>
-            </div>
-            <div className="rounded-xl border bg-muted/30 p-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Role</p>
-              <div className="mt-2">
-                <Badge
-                  variant={role === "admin" ? "default" : "outline"}
-                  className={role === "admin" ? "bg-primary/90" : ""}
-                >
-                  <ShieldCheck className="mr-1 h-3 w-3" aria-hidden />
-                  {role === "admin" ? "Admin" : "User"}
-                </Badge>
-              </div>
-            </div>
-          </div>
+        <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="h-2.5 w-2.5 rounded-full bg-success" aria-hidden />
+          Last connection {"6h ago"}
+        </span>
 
-          <div className="mt-6 rounded-xl border bg-muted/20 p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Joined</p>
-            <p className="mt-2 text-lg font-semibold">{formatDate(profile.created_at)}</p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="rounded-2xl border bg-card p-4 shadow-(--shadow-card)">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Download className="h-4 w-4" aria-hidden />
-              Downloads
-            </div>
-            <p className="mt-3 text-3xl font-bold">{downloads}</p>
-          </div>
-          <div className="rounded-2xl border bg-card p-4 shadow-(--shadow-card)">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Heart className="h-4 w-4" aria-hidden />
-              Likes
-            </div>
-            <p className="mt-3 text-3xl font-bold">{likes}</p>
-          </div>
-          <div className="rounded-2xl border bg-card p-4 shadow-(--shadow-card)">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CreditCard className="h-4 w-4" aria-hidden />
-              Purchases
-            </div>
-            <p className="mt-3 text-3xl font-bold">{purchases.length}</p>
-          </div>
+        <div className="ml-auto flex flex-wrap gap-3">
+          <Button type="button" variant="outline" className="gap-2">
+            <ShieldCheck className="h-4 w-4" aria-hidden />
+            Suspend user
+          </Button>
+          <Button type="button" variant="destructive" className="gap-2">
+            <Trash2 className="h-4 w-4" aria-hidden />
+            Delete user
+          </Button>
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-card p-6 shadow-(--shadow-card)">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="overflow-hidden rounded-2xl border bg-card shadow-(--shadow-card)">
+          <div className="border-b bg-muted/20 px-5 py-4">
+            <h2 className="text-2xl font-bold tracking-tight">Account information</h2>
+          </div>
+
+          <div className="p-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <Mail className="h-4 w-4" aria-hidden />
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Email</p>
+                  <p className="mt-1 font-medium text-foreground">{profile.email}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <CalendarCheck2 className="h-4 w-4" aria-hidden />
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Registered</p>
+                  <p className="mt-1 font-medium text-foreground">{formatDate(profile.created_at)}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <Clock3 className="h-4 w-4" aria-hidden />
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Last connection</p>
+                  <p className="mt-1 font-medium text-foreground">{connectionText}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <CheckCircle2 className="h-4 w-4" aria-hidden />
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Approved</p>
+                  <p className="mt-1 font-medium text-foreground">{profile.status === "active" ? "Approved" : "Pending"}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm text-muted-foreground sm:col-span-2">
+                <Volume2 className="h-4 w-4" aria-hidden />
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Onboarding</p>
+                  <p className="mt-1 font-medium text-foreground">{onboardingText}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="overflow-hidden rounded-2xl border bg-card shadow-(--shadow-card)">
+          <div className="border-b bg-muted/20 px-5 py-4">
+            <h2 className="text-2xl font-bold tracking-tight">Workspace usage</h2>
+          </div>
+
+          <div className="p-5 space-y-4 text-sm">
+            <div className="flex items-center justify-between gap-3 text-muted-foreground">
+              <div className="flex items-center gap-3">
+                <Users className="h-4 w-4" aria-hidden />
+                <span>Students</span>
+              </div>
+              <span className="font-medium text-foreground">{downloads}/100</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted">
+              <div
+                className="h-2 rounded-full bg-primary"
+                style={{ width: `${Math.min((downloads / 100) * 100, 100)}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-3 text-muted-foreground">
+              <div className="flex items-center gap-3">
+                <CalendarCheck2 className="h-4 w-4" aria-hidden />
+                <span>Classes</span>
+              </div>
+              <span className="font-medium text-foreground">{likes}/20</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted">
+              <div
+                className="h-2 rounded-full bg-primary"
+                style={{ width: `${Math.min((likes / 20) * 100, 100)}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-3 text-muted-foreground">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="h-4 w-4" aria-hidden />
+                <span>Storage used</span>
+              </div>
+              <span className="font-medium text-foreground">0.00 GB of 1 GB</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="mt-8 rounded-2xl border bg-card p-5 shadow-(--shadow-card)">
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="font-display text-2xl font-bold">Purchase activity</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Purchase history</h2>
           <Badge variant="secondary">{purchases.length} total</Badge>
         </div>
 
         {!purchases.length ? (
-          <p className="text-sm text-muted-foreground">This user has not completed any purchases yet.</p>
+          <p className="text-sm text-muted-foreground">This user has no recorded purchases yet.</p>
         ) : (
           <div className="space-y-3">
             {purchases.map((purchase) => {
@@ -188,19 +255,14 @@ function AdminUserDetail() {
                   className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/20 p-4"
                 >
                   <div>
-                    <p className="font-medium">{software?.name ?? "Software"}</p>
+                    <p className="font-medium text-foreground">{software?.name ?? "Software"}</p>
                     <p className="text-sm text-muted-foreground">
                       {formatDate(purchase.created_at)} · {purchase.status}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">
-                      {formatPrice(Number(purchase.amount), purchase.currency)}
-                    </p>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                      {purchase.status}
-                    </p>
-                  </div>
+                  <Badge variant={purchase.status === "paid" ? "default" : "secondary"}>
+                    {purchase.status}
+                  </Badge>
                 </div>
               );
             })}
