@@ -106,7 +106,11 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const { onlineUserIds, presenceStatus } = useAuth();
+  const { user, isAdmin, isActive, loading, onlineUserIds, presenceStatus } = useAuth();
+
+  if (loading || !user || !isAdmin || !isActive) {
+    return null;
+  }
 
   async function signOut() {
     await queryClient.cancelQueries();
