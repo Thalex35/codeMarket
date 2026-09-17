@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Circle, ShieldCheck, Users, Wifi } from "lucide-react";
+import { ChevronDown, ChevronUp, Circle, ShieldCheck, Users, Wifi } from "lucide-react";
+import { Fragment, useState } from "react";
 import { toast } from "sonner";
 
 import { EmptyState } from "@/components/EmptyState";
@@ -28,6 +29,7 @@ function AdminUsers() {
   const queryClient = useQueryClient();
   const { user, onlineUserIds, presenceStatus } = useAuth();
   const protectedAdminEmail = "admin@user.dev";
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -129,16 +131,13 @@ function AdminUsers() {
       ) : !data?.length ? (
         <EmptyState icon={Users} title="No users registered yet." />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border bg-card shadow-[var(--shadow-card)]">
-          <table className="w-full min-w-[760px] text-sm">
+        <div className="overflow-x-auto rounded-2xl border bg-card shadow-(--shadow-card)">
+          <table className="w-full min-w-190 text-sm">
             <thead className="border-b bg-muted/35 text-left text-muted-foreground">
               <tr>
                 <th className="p-3 font-medium">Name</th>
                 <th className="p-3 font-medium">Email</th>
                 <th className="p-3 font-medium">Joined</th>
-                <th className="p-3 font-medium">Downloads</th>
-                <th className="p-3 font-medium">Likes</th>
-                <th className="p-3 font-medium">Purchases</th>
                 <th className="p-3 font-medium">Status</th>
                 <th className="p-3 font-medium">Role</th>
                 <th className="p-3 font-medium">Actions</th>
@@ -148,78 +147,120 @@ function AdminUsers() {
               {data.map((row) =>
                 (() => {
                   const isProtectedAdmin = row.email?.toLowerCase() === protectedAdminEmail;
+                  const isExpanded = expandedUserId === row.id;
                   return (
-                    <tr
-                      key={row.id}
-                      className="border-b transition-colors last:border-0 hover:bg-muted/25"
-                    >
-                      <td className="p-3 font-medium">
-                        <div className="flex items-center gap-3">
-                          <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 font-display text-sm font-bold text-primary">
-                            {(row.full_name ?? row.email ?? "U").slice(0, 1).toUpperCase()}
-                            {onlineUserIds.includes(row.id) ? (
-                              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-success" />
-                            ) : null}
-                          </span>
-                          <span>{row.full_name ?? "Unnamed user"}</span>
-                        </div>
-                      </td>
-                      <td className="p-3">{row.email}</td>
-                      <td className="p-3">{formatDate(row.created_at)}</td>
-                      <td className="p-3">{row.downloads}</td>
-                      <td className="p-3">{row.likes}</td>
-                      <td className="p-3">{row.purchases}</td>
-                      <td className="p-3">
-                        <Badge
-                          className={
-                            row.status === "active"
-                              ? "border-success/20 bg-success/10 text-success"
-                              : ""
-                          }
-                          variant={row.status === "active" ? "outline" : "destructive"}
-                        >
-                          <Circle className="mr-1 h-2.5 w-2.5 fill-current" aria-hidden />
-                          {row.status === "active" ? "Active" : "Disabled"}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <Badge
-                          variant={row.role === "admin" ? "default" : "outline"}
-                          className={row.role === "admin" ? "bg-primary/90" : ""}
-                        >
-                          <ShieldCheck className="mr-1 h-3 w-3" aria-hidden />
-                          {row.role === "admin" ? "Admin" : "User"}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        {isProtectedAdmin ? null : (
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                void setStatus(
-                                  row.id,
-                                  row.status === "active" ? "disabled" : "active",
-                                )
-                              }
-                            >
-                              {row.status === "active" ? "Disable" : "Enable"}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={row.role === "admin" ? "secondary" : "default"}
-                              disabled={row.id === user?.id}
-                              onClick={() =>
-                                void setRole(row.id, row.role === "admin" ? "user" : "admin")
-                              }
-                            >
-                              {row.role === "admin" ? "Make user" : "Make admin"}
-                            </Button>
+                    <Fragment key={row.id}>
+                      <tr className="border-b transition-colors last:border-0 hover:bg-muted/25">
+                        <td className="p-3 font-medium">
+                          <div className="flex items-center gap-3">
+                            <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 font-display text-sm font-bold text-primary">
+                              {(row.full_name ?? row.email ?? "U").slice(0, 1).toUpperCase()}
+                              {onlineUserIds.includes(row.id) ? (
+                                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-success" />
+                              ) : null}
+                            </span>
+                            <span>{row.full_name ?? "Unnamed user"}</span>
                           </div>
-                        )}
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="p-3">{row.email}</td>
+                        <td className="p-3">{formatDate(row.created_at)}</td>
+                        <td className="p-3">
+                          <Badge
+                            className={
+                              row.status === "active"
+                                ? "border-success/20 bg-success/10 text-success"
+                                : ""
+                            }
+                            variant={row.status === "active" ? "outline" : "destructive"}
+                          >
+                            <Circle className="mr-1 h-2.5 w-2.5 fill-current" aria-hidden />
+                            {row.status === "active" ? "Active" : "Disabled"}
+                          </Badge>
+                        </td>
+                        <td className="p-3">
+                          <Badge
+                            variant={row.role === "admin" ? "default" : "outline"}
+                            className={row.role === "admin" ? "bg-primary/90" : ""}
+                          >
+                            <ShieldCheck className="mr-1 h-3 w-3" aria-hidden />
+                            {row.role === "admin" ? "Admin" : "User"}
+                          </Badge>
+                        </td>
+                        <td className="p-3">
+                          {isProtectedAdmin ? null : (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() =>
+                                  setExpandedUserId((current) =>
+                                    current === row.id ? null : row.id,
+                                  )
+                                }
+                              >
+                                {isExpanded ? (
+                                  <>
+                                    <ChevronUp className="mr-1 h-4 w-4" aria-hidden /> Hide
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="mr-1 h-4 w-4" aria-hidden /> Details
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  void setStatus(
+                                    row.id,
+                                    row.status === "active" ? "disabled" : "active",
+                                  )
+                                }
+                              >
+                                {row.status === "active" ? "Disable" : "Enable"}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={row.role === "admin" ? "secondary" : "default"}
+                                disabled={row.id === user?.id}
+                                onClick={() =>
+                                  void setRole(row.id, row.role === "admin" ? "user" : "admin")
+                                }
+                              >
+                                {row.role === "admin" ? "Make user" : "Make admin"}
+                              </Button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                      {isExpanded ? (
+                        <tr key={`${row.id}-details`} className="border-b bg-muted/15">
+                          <td colSpan={6} className="p-4">
+                            <div className="grid gap-3 sm:grid-cols-3">
+                              <div className="rounded-lg border bg-background p-3">
+                                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                  Downloads
+                                </p>
+                                <p className="mt-2 text-xl font-semibold">{row.downloads}</p>
+                              </div>
+                              <div className="rounded-lg border bg-background p-3">
+                                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                  Likes
+                                </p>
+                                <p className="mt-2 text-xl font-semibold">{row.likes}</p>
+                              </div>
+                              <div className="rounded-lg border bg-background p-3">
+                                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                  Purchases
+                                </p>
+                                <p className="mt-2 text-xl font-semibold">{row.purchases}</p>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
                   );
                 })(),
               )}
