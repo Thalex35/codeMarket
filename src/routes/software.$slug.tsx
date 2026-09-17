@@ -44,7 +44,6 @@ import { formatCount, formatDate, formatPrice } from "@/lib/catalog";
 import { buildWhatsAppPurchaseMessage, getPurchaseAccessState } from "@/lib/purchase-flow";
 import { getSoftwareMeta } from "@/lib/public.functions";
 import {
-  downloadFileWithProgress,
   downloadResponseWithProgress,
   fileNameFrom,
   parseStorageObjectReference,
@@ -58,12 +57,12 @@ export const Route = createFileRoute("/software/$slug")({
     if (!loaderData) {
       return {
         meta: [
-          { title: "Software not found â€” CodeMarket" },
+          { title: "Software not found - CodeMarket" },
           { name: "robots", content: "noindex" },
         ],
       };
     }
-    const title = `${loaderData.name} â€” ${loaderData.category} software on CodeMarket`;
+    const title = `${loaderData.name} - ${loaderData.category} software on CodeMarket`;
     return {
       meta: [
         { title },
@@ -185,6 +184,9 @@ function SoftwareDetail() {
 
   const isPaid = software.pricing_type === "paid";
   const isWeb = software.platform === "Web";
+  const paymentMethods = settings["payment_methods"] ?? "both";
+  const whatsappEnabled = paymentMethods === "whatsapp" || paymentMethods === "both";
+  const moncashEnabled = paymentMethods === "official-moncash" || paymentMethods === "both";
   const webUrl = currentVersion?.file_path?.trim();
   const downloadBlockedOnMobile = isMobile;
 
@@ -244,53 +246,22 @@ function SoftwareDetail() {
     setDownloadProgress(0);
     let completed = false;
     try {
-      const { error } = await supabase.from("downloads").insert({
-        software_id: software.id,
-        user_id: user!.id,
-        version_id: currentVersion?.id ?? null,
-      });
-      if (error) throw error;
-      trackEvent("download", {
-        softwareId: software.id,
-        metadata: { version: currentVersion?.version },
-      });
-      await queryClient.invalidateQueries({ queryKey: ["software"] });
-
       if (fileReference || remoteFileUrl) {
-        if (remoteFileUrl) {
-          const { data: session } = await supabase.auth.getSession();
-          const response = await fetch(
-            `/api/software/download?versionId=${encodeURIComponent(currentVersion?.id ?? "")}`,
-            { headers: { Authorization: `Bearer ${session.session?.access_token ?? ""}` } },
-          );
-          await downloadResponseWithProgress(
-            response,
-            fileNameFrom(remoteFileUrl) || `${software.slug}-download`,
-            setDownloadProgress,
-          );
-          completed = true;
-          toast.success("Your download is starting.");
-          return;
-        }
-        let downloadUrl = remoteFileUrl;
-        if (fileReference) {
-          const { data, error: fileError } = await supabase.storage
-            .from(fileReference.bucket)
-            .createSignedUrl(fileReference.path, 120, { download: true });
-          if (fileError || !data?.signedUrl) throw fileError ?? new Error("no url");
-          downloadUrl = data.signedUrl;
-        }
-        await downloadFileWithProgress(
-          downloadUrl!,
-          fileNameFrom(fileReference?.path ?? remoteFileUrl) || `${software.slug}-download`,
+        const { data: session } = await supabase.auth.getSession();
+        const response = await fetch(
+          `/api/software/download?versionId=${encodeURIComponent(currentVersion?.id ?? "")}`,
+          { headers: { Authorization: `Bearer ${session.session?.access_token ?? ""}` } },
+        );
+        await downloadResponseWithProgress(
+          response,
+          fileNameFrom(remoteFileUrl ?? fileReference?.path) || `${software.slug}-download`,
           setDownloadProgress,
         );
         completed = true;
         toast.success("Your download is starting.");
+        return;
       } else {
-        toast.info(
-          "This demo listing has no installer attached yet. Your download has been recorded.",
-        );
+        toast.info("This listing has no installer attached yet.");
       }
     } catch (error) {
       toast.error(
@@ -387,10 +358,14 @@ function SoftwareDetail() {
               <Badge variant="outline" className="gap-1">
                 <Monitor className="h-3 w-3" aria-hidden /> {software.platform}
               </Badge>
-              {!isWeb && currentVersion ? <Badge variant="outline">v{currentVersion.version}</Badge> : null}
-              {!isWeb ? <Badge variant={isPaid ? "default" : "secondary"}>
-                {isPaid ? formatPrice(software.price, software.currency) : "Free"}
-              </Badge> : null}
+              {!isWeb && currentVersion ? (
+                <Badge variant="outline">v{currentVersion.version}</Badge>
+              ) : null}
+              {!isWeb ? (
+                <Badge variant={isPaid ? "default" : "secondary"}>
+                  {isPaid ? formatPrice(software.price, software.currency) : "Free"}
+                </Badge>
+              ) : null}
             </div>
 
             <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
@@ -430,7 +405,7 @@ function SoftwareDetail() {
                   disabled={busy}
                   onClick={() => (user ? setBuyOpen(true) : setAuthPrompt(true))}
                 >
-                  Get this software â€” {formatPrice(software.price, software.currency)}
+                  Get this software - {formatPrice(software.price, software.currency)}
                 </Button>
               ) : (
                 <Button
@@ -571,7 +546,7 @@ function SoftwareDetail() {
                         ) : null}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {formatDate(version.release_date)} Â· {version.file_size ?? "â€”"}
+                        {formatDate(version.release_date)} - {version.file_size ?? "-"}
                       </span>
                     </div>
                     {version.release_notes ? (
@@ -585,34 +560,36 @@ function SoftwareDetail() {
         </div>
 
         <aside className="space-y-6">
-          {!isWeb ? <div className="rounded-xl border bg-card p-5">
-            <h2 className="font-display text-base font-semibold">Current version</h2>
-            <dl className="mt-4 space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <dt className="flex items-center gap-2 text-muted-foreground">
-                  <Tag className="h-4 w-4" aria-hidden /> Version
-                </dt>
-                <dd className="font-medium">{currentVersion?.version ?? "â€”"}</dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="h-4 w-4" aria-hidden /> Released
-                </dt>
-                <dd className="font-medium">{formatDate(currentVersion?.release_date)}</dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="flex items-center gap-2 text-muted-foreground">
-                  <HardDrive className="h-4 w-4" aria-hidden /> File size
-                </dt>
-                <dd className="font-medium">{currentVersion?.file_size ?? "â€”"}</dd>
-              </div>
-            </dl>
-            {currentVersion?.release_notes ? (
-              <p className="mt-4 border-t pt-4 text-sm text-muted-foreground">
-                {currentVersion.release_notes}
-              </p>
-            ) : null}
-          </div> : null}
+          {!isWeb ? (
+            <div className="rounded-xl border bg-card p-5">
+              <h2 className="font-display text-base font-semibold">Current version</h2>
+              <dl className="mt-4 space-y-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <dt className="flex items-center gap-2 text-muted-foreground">
+                    <Tag className="h-4 w-4" aria-hidden /> Version
+                  </dt>
+                  <dd className="font-medium">{currentVersion?.version ?? "-"}</dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="h-4 w-4" aria-hidden /> Released
+                  </dt>
+                  <dd className="font-medium">{formatDate(currentVersion?.release_date)}</dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt className="flex items-center gap-2 text-muted-foreground">
+                    <HardDrive className="h-4 w-4" aria-hidden /> File size
+                  </dt>
+                  <dd className="font-medium">{currentVersion?.file_size ?? "-"}</dd>
+                </div>
+              </dl>
+              {currentVersion?.release_notes ? (
+                <p className="mt-4 border-t pt-4 text-sm text-muted-foreground">
+                  {currentVersion.release_notes}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="rounded-xl border bg-card p-5">
             <h2 className="font-display text-base font-semibold">Requirements</h2>
@@ -697,27 +674,31 @@ function SoftwareDetail() {
               </p>
             </div>
             <DialogFooter className="flex-col gap-3 sm:flex-col sm:justify-start">
-              <Button
-                className="w-full"
-                disabled={busy}
-                onClick={() => void startMonCashCheckout()}
-              >
-                {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
-                Pay with MonCash / NatCash
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full border-primary/20 bg-primary/5 hover:bg-primary/10"
-                disabled={busy}
-                onClick={() => void requestPurchase()}
-              >
-                {busy ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                ) : (
-                  <MessageCircle className="mr-2 h-4 w-4" aria-hidden />
-                )}
-                Continue on WhatsApp
-              </Button>
+              {moncashEnabled ? (
+                <Button
+                  className="w-full"
+                  disabled={busy}
+                  onClick={() => void startMonCashCheckout()}
+                >
+                  {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
+                  Pay with Official MonCash
+                </Button>
+              ) : null}
+              {whatsappEnabled ? (
+                <Button
+                  variant="outline"
+                  className="w-full border-primary/20 bg-primary/5 hover:bg-primary/10"
+                  disabled={busy}
+                  onClick={() => void requestPurchase()}
+                >
+                  {busy ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                  ) : (
+                    <MessageCircle className="mr-2 h-4 w-4" aria-hidden />
+                  )}
+                  Continue with WhatsApp
+                </Button>
+              ) : null}
             </DialogFooter>
             <div className="flex items-start gap-3 rounded-lg border bg-muted/45 px-3.5 py-3 text-xs text-muted-foreground">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />

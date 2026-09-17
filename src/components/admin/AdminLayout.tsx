@@ -135,7 +135,9 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className={`admin-shell ${darkTheme ? "dark" : "light"} flex min-h-screen w-full bg-background text-foreground`}>
+    <div
+      className={`admin-shell ${darkTheme ? "dark" : "light"} flex min-h-screen w-full bg-background text-foreground`}
+    >
       <aside className="admin-sidebar hidden w-72 shrink-0 flex-col border-r lg:flex">
         <div className="flex h-20 items-center border-b border-sidebar-border px-6">
           <Logo inverted />
@@ -204,7 +206,11 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             aria-label={darkTheme ? "Switch to light theme" : "Switch to dark theme"}
             title={darkTheme ? "Switch to light theme" : "Switch to dark theme"}
           >
-            {darkTheme ? <Sun className="h-4 w-4" aria-hidden /> : <Moon className="h-4 w-4" aria-hidden />}
+            {darkTheme ? (
+              <Sun className="h-4 w-4" aria-hidden />
+            ) : (
+              <Moon className="h-4 w-4" aria-hidden />
+            )}
           </Button>
         </header>
 
@@ -228,7 +234,11 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               aria-label={darkTheme ? "Switch to light theme" : "Switch to dark theme"}
               title={darkTheme ? "Switch to light theme" : "Switch to dark theme"}
             >
-              {darkTheme ? <Sun className="h-4 w-4" aria-hidden /> : <Moon className="h-4 w-4" aria-hidden />}
+              {darkTheme ? (
+                <Sun className="h-4 w-4" aria-hidden />
+              ) : (
+                <Moon className="h-4 w-4" aria-hidden />
+              )}
             </Button>
           </div>
         </header>

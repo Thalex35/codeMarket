@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
 import { Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -100,6 +100,7 @@ export function SoftwareForm({
   );
   const [screenshots, setScreenshots] = useState<Screenshot[]>(initialScreenshots);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+  const previewUrls = useRef(new Set<string>());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState<Record<UploadKind, boolean>>({
@@ -192,10 +193,14 @@ export function SoftwareForm({
         controller.signal,
       );
       const previewUrl = URL.createObjectURL(fileToUpload);
+      previewUrls.current.add(previewUrl);
       if (kind === "cover") {
         setForm((prev) => ({ ...prev, cover_url: reference }));
         setCoverPreviewUrl((previous) => {
-          if (previous) URL.revokeObjectURL(previous);
+          if (previous) {
+            URL.revokeObjectURL(previous);
+            previewUrls.current.delete(previous);
+          }
           return previewUrl;
         });
       }
@@ -238,6 +243,14 @@ export function SoftwareForm({
   function cancelUpload(kind: UploadKind) {
     uploadControllers.current[kind]?.abort();
   }
+
+  useEffect(() => {
+    const urls = previewUrls.current;
+    return () => {
+      for (const previewUrl of urls) URL.revokeObjectURL(previewUrl);
+      urls.clear();
+    };
+  }, []);
 
   async function submit(publish: boolean) {
     const price = Number(form.price) || 0;
@@ -462,48 +475,212 @@ export function SoftwareForm({
         </div>
       </section>
 
-      {!isWeb ? <section className="space-y-4 rounded-xl border bg-card p-5">
-        <h2 className="font-display text-lg font-semibold">Pricing</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="space-y-2">
-            <Label>Pricing type</Label>
-            <Select value={form.pricing_type} onValueChange={(value) => setForm((prev) => ({ ...prev, pricing_type: value }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="free">Free</SelectItem><SelectItem value="paid">Paid</SelectItem></SelectContent>
-            </Select>
+      {!isWeb ? (
+        <section className="space-y-4 rounded-xl border bg-card p-5">
+          <h2 className="font-display text-lg font-semibold">Pricing</h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label>Pricing type</Label>
+              <Select
+                value={form.pricing_type}
+                onValueChange={(value) => setForm((prev) => ({ ...prev, pricing_type: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {form.pricing_type === "paid" ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.price}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, price: event.target.value }))
+                    }
+                  />
+                  {errors["price"] ? (
+                    <p className="text-xs text-destructive">{errors["price"]}</p>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Input
+                    id="currency"
+                    maxLength={3}
+                    value={form.currency}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, currency: event.target.value.toUpperCase() }))
+                    }
+                  />
+                </div>
+              </>
+            ) : null}
           </div>
-          {form.pricing_type === "paid" ? <>
-            <div className="space-y-2"><Label htmlFor="price">Price</Label><Input id="price" type="number" min={0} step="0.01" value={form.price} onChange={(event) => setForm((prev) => ({ ...prev, price: event.target.value }))} />{errors["price"] ? <p className="text-xs text-destructive">{errors["price"]}</p> : null}</div>
-            <div className="space-y-2"><Label htmlFor="currency">Currency</Label><Input id="currency" maxLength={3} value={form.currency} onChange={(event) => setForm((prev) => ({ ...prev, currency: event.target.value.toUpperCase() }))} /></div>
-          </> : null}
-        </div>
-      </section> : null}
+        </section>
+      ) : null}
 
-      {!editing || isWeb ? <section className="space-y-4 rounded-xl border bg-card p-5">
-        <h2 className="font-display text-lg font-semibold">First version</h2>
-        {!isWeb ? <div className="grid gap-4 sm:grid-cols-3">
-          <div className="space-y-2"><Label htmlFor="version">Version</Label><Input id="version" value={version.version} onChange={(event) => setVersion((prev) => ({ ...prev, version: event.target.value }))} /></div>
-          <div className="space-y-2"><Label htmlFor="release-date">Release date</Label><Input id="release-date" type="date" value={version.release_date} onChange={(event) => setVersion((prev) => ({ ...prev, release_date: event.target.value }))} /></div>
-          <div className="space-y-2"><Label htmlFor="file-size">File size</Label><Input id="file-size" value={version.file_size} placeholder="e.g. 48 MB" onChange={(event) => setVersion((prev) => ({ ...prev, file_size: event.target.value }))} /></div>
-        </div> : null}
-        {!isWeb ? <div className="space-y-2"><Label htmlFor="notes">Release notes</Label><Textarea id="notes" rows={3} value={version.release_notes} onChange={(event) => setVersion((prev) => ({ ...prev, release_notes: event.target.value }))} /></div> : null}
-        <div className="space-y-2">
-          {form.platform === "Web" ? <>
-            <Label htmlFor="web-url">Web URL</Label>
-            <Input id="web-url" type="url" placeholder="https://your-app.example.com" value={version.file_path} onChange={(event) => setVersion((prev) => ({ ...prev, file_path: event.target.value }))} />
-            <p className="text-xs text-muted-foreground">Users will open this URL to use the web application.</p>
-          </> : <>
-            <Label>Installer file</Label>
-            {uploading.installer && uploadProgress.installer !== null ? <ProgressPanel label="Uploading installer" progress={uploadProgress.installer} detail="Your installer is being securely transferred." onCancel={() => cancelUpload("installer")} /> : null}
-            <label className="inline-flex"><input type="file" className="hidden" onChange={(event) => void handleUpload(event, "installer")} /><span className="inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm hover:bg-accent">{uploading.installer ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : <Upload className="mr-2 h-4 w-4" aria-hidden />}Upload installer</span></label>
-            {version.file_path ? <p className="text-xs text-muted-foreground">Uploaded: {version.file_path}</p> : null}
-            <div className="space-y-2"><Label htmlFor="github-release-url">Or use a GitHub Release URL</Label><Input id="github-release-url" type="url" placeholder="https://github.com/owner/repo/releases/download/..." value={version.file_path.startsWith("http") ? version.file_path : ""} onChange={(event) => setVersion((prev) => ({ ...prev, file_path: event.target.value }))} /><p className="text-xs text-muted-foreground">Upload the installer to a GitHub Release first, then paste the asset URL here.</p></div>
-            {uploadedFiles.installer ? <p className="text-sm font-medium text-emerald-700">Upload complete: {uploadedFiles.installer.name} ({formatFileSize(uploadedFiles.installer.size)})</p> : null}
-            <label className="flex items-center gap-2 text-sm text-muted-foreground"><Checkbox checked={compressInstaller} onCheckedChange={(checked) => setCompressInstaller(Boolean(checked))} />Compress installer into a ZIP archive before upload</label>
-            {installerSize ? <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground"><p>Original size: <strong className="text-foreground">{formatFileSize(installerSize.original)}</strong></p>{installerSize.processing ? <p className="mt-1">Calculating compressed size...</p> : <p className="mt-1">Upload size: <strong className="text-foreground">{formatFileSize(installerSize.prepared)}</strong>{installerSize.compressed ? " (ZIP compressed)" : " (original file)"}</p>}</div> : null}
-          </>}
-        </div>
-      </section> : null}
+      {!editing || isWeb ? (
+        <section className="space-y-4 rounded-xl border bg-card p-5">
+          <h2 className="font-display text-lg font-semibold">First version</h2>
+          {!isWeb ? (
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="version">Version</Label>
+                <Input
+                  id="version"
+                  value={version.version}
+                  onChange={(event) =>
+                    setVersion((prev) => ({ ...prev, version: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="release-date">Release date</Label>
+                <Input
+                  id="release-date"
+                  type="date"
+                  value={version.release_date}
+                  onChange={(event) =>
+                    setVersion((prev) => ({ ...prev, release_date: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="file-size">File size</Label>
+                <Input
+                  id="file-size"
+                  value={version.file_size}
+                  placeholder="e.g. 48 MB"
+                  onChange={(event) =>
+                    setVersion((prev) => ({ ...prev, file_size: event.target.value }))
+                  }
+                />
+              </div>
+            </div>
+          ) : null}
+          {!isWeb ? (
+            <div className="space-y-2">
+              <Label htmlFor="notes">Release notes</Label>
+              <Textarea
+                id="notes"
+                rows={3}
+                value={version.release_notes}
+                onChange={(event) =>
+                  setVersion((prev) => ({ ...prev, release_notes: event.target.value }))
+                }
+              />
+            </div>
+          ) : null}
+          <div className="space-y-2">
+            {form.platform === "Web" ? (
+              <>
+                <Label htmlFor="web-url">Web URL</Label>
+                <Input
+                  id="web-url"
+                  type="url"
+                  placeholder="https://your-app.example.com"
+                  value={version.file_path}
+                  onChange={(event) =>
+                    setVersion((prev) => ({ ...prev, file_path: event.target.value }))
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Users will open this URL to use the web application.
+                </p>
+              </>
+            ) : (
+              <>
+                <Label>Installer file</Label>
+                {uploading.installer && uploadProgress.installer !== null ? (
+                  <ProgressPanel
+                    label="Uploading installer"
+                    progress={uploadProgress.installer}
+                    detail="Your installer is being securely transferred."
+                    onCancel={() => cancelUpload("installer")}
+                  />
+                ) : null}
+                <label className="inline-flex">
+                  <input
+                    type="file"
+                    className="hidden"
+                    onChange={(event) => void handleUpload(event, "installer")}
+                  />
+                  <span className="inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm hover:bg-accent">
+                    {uploading.installer ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                    ) : (
+                      <Upload className="mr-2 h-4 w-4" aria-hidden />
+                    )}
+                    Upload installer
+                  </span>
+                </label>
+                {version.file_path ? (
+                  <p className="text-xs text-muted-foreground">Uploaded: {version.file_path}</p>
+                ) : null}
+                <div className="space-y-2">
+                  <Label htmlFor="github-release-url">Or use a GitHub Release URL</Label>
+                  <Input
+                    id="github-release-url"
+                    type="url"
+                    placeholder="https://github.com/owner/repo/releases/download/..."
+                    value={version.file_path.startsWith("http") ? version.file_path : ""}
+                    onChange={(event) =>
+                      setVersion((prev) => ({ ...prev, file_path: event.target.value }))
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Upload the installer to a GitHub Release first, then paste the asset URL here.
+                  </p>
+                </div>
+                {uploadedFiles.installer ? (
+                  <p className="text-sm font-medium text-emerald-700">
+                    Upload complete: {uploadedFiles.installer.name} (
+                    {formatFileSize(uploadedFiles.installer.size)})
+                  </p>
+                ) : null}
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Checkbox
+                    checked={compressInstaller}
+                    onCheckedChange={(checked) => setCompressInstaller(Boolean(checked))}
+                  />
+                  Compress installer into a ZIP archive before upload
+                </label>
+                {installerSize ? (
+                  <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                    <p>
+                      Original size:{" "}
+                      <strong className="text-foreground">
+                        {formatFileSize(installerSize.original)}
+                      </strong>
+                    </p>
+                    {installerSize.processing ? (
+                      <p className="mt-1">Calculating compressed size...</p>
+                    ) : (
+                      <p className="mt-1">
+                        Upload size:{" "}
+                        <strong className="text-foreground">
+                          {formatFileSize(installerSize.prepared)}
+                        </strong>
+                        {installerSize.compressed ? " (ZIP compressed)" : " (original file)"}
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+              </>
+            )}
+          </div>
+        </section>
+      ) : null}
 
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Media</h2>
@@ -572,6 +749,10 @@ export function SoftwareForm({
                   onClick={async () => {
                     if (shot.id)
                       await supabase.from("software_screenshots").delete().eq("id", shot.id);
+                    if (shot.preview_url) {
+                      URL.revokeObjectURL(shot.preview_url);
+                      previewUrls.current.delete(shot.preview_url);
+                    }
                     setScreenshots((prev) =>
                       prev.filter((item) => item.image_url !== shot.image_url),
                     );

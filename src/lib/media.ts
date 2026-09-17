@@ -12,9 +12,27 @@ export type ProgressCallback = (progress: number) => void;
 
 export function normalizeStorageReference(reference: string | null | undefined): string | null {
   if (!reference) return null;
-  if (reference.startsWith("http") || reference.startsWith("/")) return reference;
+  const trimmed = reference.trim();
+  if (trimmed.startsWith("blob:")) {
+    try {
+      return new URL(trimmed).protocol === "blob:" ? trimmed : null;
+    } catch {
+      return null;
+    }
+  }
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      return new URL(trimmed).protocol.toLowerCase() === "https:" ||
+        new URL(trimmed).protocol.toLowerCase() === "http:"
+        ? trimmed
+        : null;
+    } catch {
+      return null;
+    }
+  }
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed;
 
-  const normalized = reference.replace(/\\/g, "/").trim();
+  const normalized = trimmed.replace(/\\/g, "/");
   if (
     !normalized ||
     normalized.includes("..") ||
@@ -43,7 +61,13 @@ export function parseStorageObjectReference(
   reference: string | null | undefined,
 ): StorageObjectReference | null {
   const normalized = normalizeStorageReference(reference);
-  if (!normalized || normalized.startsWith("http") || normalized.startsWith("/")) return null;
+  if (
+    !normalized ||
+    normalized.startsWith("blob:") ||
+    /^https?:\/\//i.test(normalized) ||
+    normalized.startsWith("/")
+  )
+    return null;
 
   const [bucket, ...rest] = normalized.split("/");
   const path = rest.join("/");
@@ -64,7 +88,12 @@ export async function resolveImageUrl(
     return reference && (reference.startsWith("http") || reference.startsWith("/"))
       ? reference
       : null;
-  if (normalized.startsWith("http") || normalized.startsWith("/")) return normalized;
+  if (
+    normalized.startsWith("blob:") ||
+    /^https?:\/\//i.test(normalized) ||
+    normalized.startsWith("/")
+  )
+    return normalized;
   const cacheKey = preferSigned ? `${normalized}:signed` : normalized;
   if (cache.has(cacheKey)) return cache.get(cacheKey)!;
 

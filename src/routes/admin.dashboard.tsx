@@ -38,11 +38,6 @@ const RANGES = [
   { label: "All time", days: 0 },
 ];
 
-async function countOf(table: "profiles" | "software" | "downloads" | "likes" | "purchases") {
-  const { count } = await supabase.from(table).select("id", { count: "exact", head: true });
-  return count ?? 0;
-}
-
 function AdminDashboard() {
   const [days, setDays] = useState(30);
   const { onlineUserIds } = useAuth();
@@ -50,51 +45,32 @@ function AdminDashboard() {
   const { data: kpis, isLoading } = useQuery({
     queryKey: ["admin-kpis"],
     queryFn: async () => {
-      const [users, software, downloads, likes, purchases] = await Promise.all([
-        countOf("profiles"),
-        countOf("software"),
-        countOf("downloads"),
-        countOf("likes"),
-        countOf("purchases"),
-      ]);
-      const { count: pending } = await supabase
-        .from("purchases")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pending");
-      const { count: unread } = await supabase
-        .from("messages")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "unread");
-      return {
-        users,
-        software,
-        downloads,
-        likes,
-        purchases,
-        pending: pending ?? 0,
-        unread: unread ?? 0,
-      };
+      const { data, error } = await supabase.rpc(
+        "admin_dashboard_summary" as never,
+        {
+          _days: 30,
+        } as never,
+      );
+      if (error) throw error;
+      return (data ?? {}) as Record<string, number>;
     },
   });
 
   const { data: chart } = useQuery({
     queryKey: ["admin-downloads-chart", days],
     queryFn: async () => {
-      let query = supabase.from("downloads").select("downloaded_at");
-      if (days > 0) {
-        const since = new Date(Date.now() - days * 86400000).toISOString();
-        query = query.gte("downloaded_at", since);
-      }
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc(
+        "admin_dashboard_summary" as never,
+        {
+          _days: days,
+        } as never,
+      );
       if (error) throw error;
-      const buckets = new Map<string, number>();
-      for (const row of data ?? []) {
-        const key = String(row.downloaded_at).slice(0, 10);
-        buckets.set(key, (buckets.get(key) ?? 0) + 1);
-      }
-      return [...buckets.entries()]
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([date, count]) => ({ date: date.slice(5), count }));
+      const summary = (data ?? {}) as { downloads_by_day?: { date: string; count: number }[] };
+      return (summary.downloads_by_day ?? []).map((item) => ({
+        date: item.date.slice(5),
+        count: item.count,
+      }));
     },
   });
 

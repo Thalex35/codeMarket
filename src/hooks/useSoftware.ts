@@ -12,15 +12,20 @@ export type SoftwareFilters = {
   platform?: string;
   pricing?: string;
   sort?: string;
+  featured?: boolean;
+  page?: number;
+  pageSize?: number;
 };
 
 export function usePublishedSoftware(filters: SoftwareFilters = {}) {
   return useQuery({
     queryKey: ["software", "published", filters],
-    queryFn: async (): Promise<Software[]> => {
+    queryFn: async (): Promise<{ items: Software[]; total: number }> => {
+      const page = Math.max(1, filters.page ?? 1);
+      const pageSize = Math.min(50, Math.max(1, filters.pageSize ?? 12));
       let query = supabase
         .from("software")
-        .select(SOFTWARE_COLUMNS)
+        .select(SOFTWARE_COLUMNS, { count: "exact" })
         .eq("published", true)
         .eq("archived", false);
 
@@ -36,6 +41,7 @@ export function usePublishedSoftware(filters: SoftwareFilters = {}) {
         query = query.eq("platform", filters.platform);
       if (filters.pricing && filters.pricing !== "all")
         query = query.eq("pricing_type", filters.pricing);
+      if (filters.featured !== undefined) query = query.eq("featured", filters.featured);
 
       switch (filters.sort) {
         case "downloads":
@@ -51,9 +57,10 @@ export function usePublishedSoftware(filters: SoftwareFilters = {}) {
           query = query.order("created_at", { ascending: false });
       }
 
-      const { data, error } = await query;
+      const from = (page - 1) * pageSize;
+      const { data, error, count } = await query.range(from, from + pageSize - 1);
       if (error) throw error;
-      return (data ?? []) as unknown as Software[];
+      return { items: (data ?? []) as unknown as Software[], total: count ?? 0 };
     },
   });
 }

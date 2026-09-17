@@ -58,7 +58,7 @@ function Catalog() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/software/" });
   const [term, setTerm] = useState(search.q ?? "");
-  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     trackEvent("page_view", { metadata: { path: "/software" } });
@@ -77,13 +77,15 @@ function Catalog() {
     platform: search.platform ?? "all",
     pricing: search.pricing ?? "all",
     sort: search.sort ?? "newest",
+    page,
+    pageSize: PAGE_SIZE,
   });
 
-  const items = data ?? [];
-  const shown = items.slice(0, visible);
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
 
   function update(key: keyof CatalogSearch, value: string) {
-    setVisible(PAGE_SIZE);
+    setPage(1);
     void navigate({
       search: (prev: CatalogSearch) => ({ ...prev, [key]: value === "all" ? undefined : value }),
     });
@@ -95,7 +97,7 @@ function Catalog() {
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
           <h1 className="font-display text-3xl font-bold">Software catalog</h1>
           <p className="mt-2 text-muted-foreground">
-            {items.length} application{items.length === 1 ? "" : "s"} available on CodeMarket.
+            {total} application{total === 1 ? "" : "s"} available on CodeMarket.
           </p>
 
           <div className="mt-6 grid gap-3 lg:grid-cols-[2fr_repeat(4,1fr)]">
@@ -192,16 +194,16 @@ function Catalog() {
             title="We couldn't load the catalog"
             description="Please check your connection and try again."
           />
-        ) : shown.length ? (
+        ) : items.length ? (
           <>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {shown.map((item) => (
+              {items.map((item) => (
                 <SoftwareCard key={item.id} software={item} />
               ))}
             </div>
-            {visible < items.length ? (
+            {page * PAGE_SIZE < total ? (
               <div className="mt-10 flex justify-center">
-                <Button variant="outline" onClick={() => setVisible((value) => value + PAGE_SIZE)}>
+                <Button variant="outline" onClick={() => setPage((value) => value + 1)}>
                   Load more
                 </Button>
               </div>

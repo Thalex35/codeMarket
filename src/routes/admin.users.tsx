@@ -1,11 +1,6 @@
-import {
-  createFileRoute,
-  Outlet,
-  useLocation,
-  useNavigate,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useState } from "react";
 import { Circle, ShieldCheck, Users, Wifi } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,62 +25,39 @@ export const Route = createFileRoute("/admin/users")({
   component: AdminUsers,
 });
 
+type UserRow = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  status: string;
+  created_at: string;
+  role: string;
+};
+
 function AdminUsers() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, onlineUserIds, presenceStatus } = useAuth();
-  const protectedAdminEmail = "admin@user.dev";
-
-  useEffect(() => {
-    void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-  }, [onlineUserIds, queryClient]);
+  const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-users"],
+    queryKey: ["admin-users", page],
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
-    refetchInterval: 10_000,
     queryFn: async () => {
-      const [
-        { data: profiles, error },
-        { data: downloads },
-        { data: likes },
-        { data: purchases },
-        { data: roles },
-      ] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id, full_name, email, status, created_at")
-          .order("created_at", { ascending: false }),
-        supabase.from("downloads").select("user_id"),
-        supabase.from("likes").select("user_id"),
-        supabase.from("purchases").select("user_id"),
-        supabase.from("user_roles").select("user_id, role"),
-      ]);
+      const { data: rows, error } = await supabase.rpc(
+        "admin_users_page" as never,
+        {
+          _page: page,
+          _page_size: 25,
+        } as never,
+      );
       if (error) throw error;
-
-      const tally = (rows: { user_id: string | null }[] | null) => {
-        const map = new Map<string, number>();
-        for (const row of rows ?? []) {
-          if (!row.user_id) continue;
-          map.set(row.user_id, (map.get(row.user_id) ?? 0) + 1);
-        }
-        return map;
+      return {
+        rows: (rows ?? []) as UserRow[],
+        total: Number((rows?.[0] as { total_count?: number } | undefined)?.total_count ?? 0),
       };
-
-      const downloadMap = tally(downloads);
-      const likeMap = tally(likes);
-      const purchaseMap = tally(purchases);
-      const roleMap = new Map((roles ?? []).map((role) => [role.user_id, role.role]));
-
-      return (profiles ?? []).map((profile) => ({
-        ...profile,
-        role: roleMap.get(profile.id) ?? "user",
-        downloads: downloadMap.get(profile.id) ?? 0,
-        likes: likeMap.get(profile.id) ?? 0,
-        purchases: purchaseMap.get(profile.id) ?? 0,
-      }));
     },
   });
 
@@ -145,7 +117,7 @@ function AdminUsers() {
 
       {isLoading ? (
         <Skeleton className="h-64 w-full rounded-xl" />
-      ) : !data?.length ? (
+      ) : !data?.rows.length ? (
         <EmptyState icon={Users} title="No users registered yet." />
       ) : (
         <div className="overflow-x-auto rounded-2xl border bg-card shadow-(--shadow-card)">
@@ -161,15 +133,17 @@ function AdminUsers() {
               </tr>
             </thead>
             <tbody>
-              {data.map((row) =>
+              {data.rows.map((row) =>
                 (() => {
-                  const isProtectedAdmin = row.email?.toLowerCase() === protectedAdminEmail;
+                  const isProtectedAdmin = row.role === "admin" && data.total <= 1;
                   return (
                     <tr
                       key={row.id}
                       tabIndex={0}
                       className="cursor-pointer border-b transition-colors last:border-0 hover:bg-muted/25 focus:bg-muted/25 focus:outline-none"
-                      onClick={() => void navigate({ to: "/admin/users/$id", params: { id: row.id } })}
+                      onClick={() =>
+                        void navigate({ to: "/admin/users/$id", params: { id: row.id } })
+                      }
                       onKeyDown={(event) => {
                         if (event.key === "Enter" || event.key === " ") {
                           event.preventDefault();
@@ -180,7 +154,9 @@ function AdminUsers() {
                       <td className="p-3 font-medium">
                         <div className="flex items-center gap-3">
                           <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 font-display text-sm font-bold text-primary">
-                            {(row.full_name ?? row.email ?? "U").slice(0, 1).toUpperCase()}
+                            {String(row.full_name ?? row.email ?? "U")
+                              .slice(0, 1)
+                              .toUpperCase()}
                             {onlineUserIds.includes(row.id) ? (
                               <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-success" />
                             ) : null}
@@ -189,7 +165,7 @@ function AdminUsers() {
                         </div>
                       </td>
                       <td className="p-3">{row.email}</td>
-                      <td className="p-3">{formatDate(row.created_at)}</td>
+                      <td className="p-3">{formatDate(String(row.created_at))}</td>
                       <td className="p-3">
                         <Badge
                           className={
@@ -250,6 +226,31 @@ function AdminUsers() {
           </table>
         </div>
       )}
+      {data && data.total > 25 ? (
+        <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+          <span>
+            Showing page {page} of {Math.ceil(data.total / 25)}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 1}
+              onClick={() => setPage((value) => value - 1)}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page * 25 >= data.total}
+              onClick={() => setPage((value) => value + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

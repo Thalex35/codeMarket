@@ -1,5 +1,13 @@
 # Code Discovery Hub
 
+## Development Checks
+
+Install dependencies with `npm install` or `bun install`. Run `npm run verify` (or `bun run verify`) before deployment; it runs lint, tests, and a production build.
+
+Required server environment variables are `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` (server-only). Official MonCash also requires `MONCASH_MODE`, `MONCASH_CLIENT_ID`, `MONCASH_CLIENT_SECRET`, `MONCASH_AMOUNT_MULTIPLIER`, and `PUBLIC_APP_URL`. Set `TURNSTILE_SECRET_KEY` to enable Cloudflare Turnstile verification for contact submissions; leave it unset to use the built-in rate limit and honeypot protection.
+
+Payment methods are configured by an admin under Settings: `whatsapp`, `official-moncash`, or `both`. The safe default is `both`.
+
 CODEMARKET — MVP BUILD SPECIFICATION
 
 1. PROJECT OVERVIEW
@@ -38,11 +46,11 @@ There is no developer dashboard.
 
 There is no job marketplace.
 
-There is no automatic online payment system.
+Official MonCash checkout is available when enabled by the administrator.
 
 There is no Stripe/Visa/Mastercard integration.
 
-Paid software uses a WhatsApp-based purchase flow.
+Paid software uses the configured WhatsApp/manual flow, Official MonCash, or both.
 
 Users can browse the platform without an account.
 

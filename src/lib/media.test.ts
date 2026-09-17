@@ -11,6 +11,19 @@ test("accepts valid storage references", () => {
   );
 });
 
+test("accepts local previews and regular image URLs", () => {
+  assert.equal(
+    normalizeStorageReference("blob:https://example.com/preview-id"),
+    "blob:https://example.com/preview-id",
+  );
+  assert.equal(
+    normalizeStorageReference("https://cdn.example.com/image.png"),
+    "https://cdn.example.com/image.png",
+  );
+  assert.equal(normalizeStorageReference("/images/placeholder.png"), "/images/placeholder.png");
+  assert.equal(parseStorageObjectReference("blob:https://example.com/preview-id"), null);
+});
+
 test("rejects invalid bucket or traversal path", () => {
   assert.equal(normalizeStorageReference("admin/../../secret.txt"), null);
   assert.equal(normalizeStorageReference("not-allowed/path/to/file.txt"), null);

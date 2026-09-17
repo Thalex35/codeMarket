@@ -29,6 +29,8 @@ import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
 import { Route as AdminPurchasesRouteImport } from './routes/admin.purchases'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as ApiAnalyticsRouteImport } from './routes/api.analytics'
+import { Route as ApiContactRouteImport } from './routes/api.contact'
 import { Route as PaymentCompleteRouteImport } from './routes/payment.complete'
 import { Route as SoftwareIndexRouteImport } from './routes/software.index'
 import { Route as SoftwareSlugRouteImport } from './routes/software.$slug'
@@ -139,6 +141,16 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiAnalyticsRoute = ApiAnalyticsRouteImport.update({
+  id: '/api/analytics',
+  path: '/api/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContactRoute = ApiContactRouteImport.update({
+  id: '/api/contact',
+  path: '/api/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PaymentCompleteRoute = PaymentCompleteRouteImport.update({
   id: '/payment/complete',
   path: '/payment/complete',
@@ -210,6 +222,8 @@ export interface FileRoutesByFullPath {
   '/admin/purchases': typeof AdminPurchasesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRouteWithChildren
+  '/api/analytics': typeof ApiAnalyticsRoute
+  '/api/contact': typeof ApiContactRoute
   '/payment/complete': typeof PaymentCompleteRoute
   '/software/$slug': typeof SoftwareSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -240,6 +254,8 @@ export interface FileRoutesByTo {
   '/admin/purchases': typeof AdminPurchasesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRouteWithChildren
+  '/api/analytics': typeof ApiAnalyticsRoute
+  '/api/contact': typeof ApiContactRoute
   '/payment/complete': typeof PaymentCompleteRoute
   '/software/$slug': typeof SoftwareSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -273,6 +289,8 @@ export interface FileRoutesById {
   '/admin/purchases': typeof AdminPurchasesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRouteWithChildren
+  '/api/analytics': typeof ApiAnalyticsRoute
+  '/api/contact': typeof ApiContactRoute
   '/payment/complete': typeof PaymentCompleteRoute
   '/software/$slug': typeof SoftwareSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -306,6 +324,8 @@ export interface FileRouteTypes {
     | '/admin/purchases'
     | '/admin/settings'
     | '/admin/users'
+    | '/api/analytics'
+    | '/api/contact'
     | '/payment/complete'
     | '/software/$slug'
     | '/admin/'
@@ -336,6 +356,8 @@ export interface FileRouteTypes {
     | '/admin/purchases'
     | '/admin/settings'
     | '/admin/users'
+    | '/api/analytics'
+    | '/api/contact'
     | '/payment/complete'
     | '/software/$slug'
     | '/admin'
@@ -368,6 +390,8 @@ export interface FileRouteTypes {
     | '/admin/purchases'
     | '/admin/settings'
     | '/admin/users'
+    | '/api/analytics'
+    | '/api/contact'
     | '/payment/complete'
     | '/software/$slug'
     | '/admin/'
@@ -389,6 +413,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiAnalyticsRoute: typeof ApiAnalyticsRoute
+  ApiContactRoute: typeof ApiContactRoute
   PaymentCompleteRoute: typeof PaymentCompleteRoute
   SoftwareSlugRoute: typeof SoftwareSlugRoute
   SoftwareIndexRoute: typeof SoftwareIndexRoute
@@ -538,6 +564,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/analytics': {
+      id: '/api/analytics'
+      path: '/api/analytics'
+      fullPath: '/api/analytics'
+      preLoaderRoute: typeof ApiAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/contact': {
+      id: '/api/contact'
+      path: '/api/contact'
+      fullPath: '/api/contact'
+      preLoaderRoute: typeof ApiContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/payment/complete': {
       id: '/payment/complete'
       path: '/payment/complete'
@@ -682,6 +722,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiAnalyticsRoute: ApiAnalyticsRoute,
+  ApiContactRoute: ApiContactRoute,
   PaymentCompleteRoute: PaymentCompleteRoute,
   SoftwareSlugRoute: SoftwareSlugRoute,
   SoftwareIndexRoute: SoftwareIndexRoute,

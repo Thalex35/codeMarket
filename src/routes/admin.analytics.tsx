@@ -36,26 +36,25 @@ function AdminAnalytics() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-analytics", days],
     queryFn: async () => {
-      let query = supabase.from("analytics_events").select("event_type, created_at, software_id");
-      if (days > 0) {
-        query = query.gte("created_at", new Date(Date.now() - days * 86400000).toISOString());
-      }
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc(
+        "admin_analytics_summary" as never,
+        {
+          _days: days,
+        } as never,
+      );
       if (error) throw error;
-
-      const byType = new Map<string, number>();
-      const byDay = new Map<string, number>();
-      for (const row of data ?? []) {
-        byType.set(row.event_type, (byType.get(row.event_type) ?? 0) + 1);
-        const key = String(row.created_at).slice(0, 10);
-        byDay.set(key, (byDay.get(key) ?? 0) + 1);
-      }
+      const summary = (data ?? {}) as {
+        total?: number;
+        by_type?: { type: string; count: number }[];
+        by_day?: { date: string; count: number }[];
+      };
       return {
-        total: (data ?? []).length,
-        byType: [...byType.entries()].sort((a, b) => b[1] - a[1]),
-        byDay: [...byDay.entries()]
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([date, count]) => ({ date: date.slice(5), count })),
+        total: summary.total ?? 0,
+        byType: (summary.by_type ?? []).map((item) => [item.type, item.count] as [string, number]),
+        byDay: (summary.by_day ?? []).map((item) => ({
+          date: item.date.slice(5),
+          count: item.count,
+        })),
       };
     },
   });

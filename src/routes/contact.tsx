@@ -9,9 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/hooks/useAuth";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/contact")({
@@ -41,7 +39,6 @@ const schema = z.object({
 });
 
 function Contact() {
-  const { user } = useAuth();
   const { settings } = useSiteSettings();
   const [values, setValues] = useState({ name: "", email: "", subject: "", message: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -60,11 +57,13 @@ function Contact() {
     setErrors({});
     setSending(true);
     try {
-      const { error } = await supabase.from("messages").insert({
-        ...parsed.data,
-        user_id: user?.id ?? null,
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...parsed.data, website: "" }),
       });
-      if (error) throw error;
+      const result = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(result.error ?? "The message could not be sent.");
       trackEvent("contact");
       setSent(true);
       setValues({ name: "", email: "", subject: "", message: "" });

@@ -1,5 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
-
 export type AnalyticsEventType =
   | "page_view"
   | "software_view"
@@ -11,17 +9,18 @@ export type AnalyticsEventType =
   | "purchase_request"
   | "contact";
 
-/** Fire-and-forget, privacy-conscious: no IPs, no fingerprints, no PII. */
+/** Fire-and-forget, privacy-conscious: no IPs, no fingerprints, no PII in stored events. */
 export function trackEvent(
   eventType: AnalyticsEventType,
   options: { softwareId?: string | null; metadata?: Record<string, unknown> } = {},
 ) {
-  void supabase
-    .from("analytics_events")
-    .insert({
-      event_type: eventType,
-      software_id: options.softwareId ?? null,
-      metadata: (options.metadata ?? {}) as never,
-    })
-    .then(() => undefined);
+  void fetch("/api/analytics", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      eventType,
+      softwareId: options.softwareId ?? null,
+      metadata: options.metadata ?? {},
+    }),
+  }).catch(() => undefined);
 }

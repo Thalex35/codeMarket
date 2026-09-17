@@ -9,6 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSocialUrl, normalizeWhatsAppNumber } from "@/lib/url";
 
@@ -37,6 +44,11 @@ const FIELDS: { key: string; label: string; hint?: string; multiline?: boolean }
     key: "whatsapp_number",
     label: "WhatsApp number",
     hint: "Used for paid software purchases, e.g. +254712345678",
+  },
+  {
+    key: "payment_methods",
+    label: "Payment methods",
+    hint: "Choose WhatsApp/manual requests, Official MonCash, or both.",
   },
   { key: "currency", label: "Default currency" },
   { key: "facebook_url", label: "Facebook link" },
@@ -105,7 +117,21 @@ function AdminSettings() {
         {FIELDS.map((field) => (
           <div key={field.key} className="space-y-2">
             <Label htmlFor={field.key}>{field.label}</Label>
-            {field.multiline ? (
+            {field.key === "payment_methods" ? (
+              <Select
+                value={values[field.key] || "both"}
+                onValueChange={(value) => setValues((prev) => ({ ...prev, [field.key]: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="whatsapp">WhatsApp/manual requests</SelectItem>
+                  <SelectItem value="official-moncash">Official MonCash</SelectItem>
+                  <SelectItem value="both">Both methods</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : field.multiline ? (
               <Textarea
                 id={field.key}
                 rows={3}

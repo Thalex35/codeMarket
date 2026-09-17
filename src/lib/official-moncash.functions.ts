@@ -85,6 +85,15 @@ export const createOfficialMonCashCheckout = createServerFn({ method: "POST" })
     } = await supabase.auth.getUser();
     if (userError || !user) throw new Error("Authentication is required");
 
+    const { data: paymentSetting } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "payment_methods")
+      .maybeSingle();
+    if (paymentSetting?.value && !["official-moncash", "both"].includes(paymentSetting.value)) {
+      throw new Error("Official MonCash is not enabled by the administrator");
+    }
+
     const { data: software, error: softwareError } = await supabase
       .from("software")
       .select("id, pricing_type, price, currency, published, archived")

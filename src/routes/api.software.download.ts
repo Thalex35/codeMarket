@@ -74,8 +74,9 @@ export const Route = createFileRoute("/api/software/download")({
           .from("software_versions")
           .select("version, file_path, software_id")
           .eq("id", versionId)
+          .eq("is_current", true)
           .maybeSingle();
-        if (versionError || !version?.file_path?.startsWith("http")) {
+        if (versionError || !version?.file_path) {
           return new Response("Download not found", { status: 404 });
         }
 
@@ -87,6 +88,12 @@ export const Route = createFileRoute("/api/software/download")({
         if (softwareError || !software?.published || software.archived) {
           return new Response("Download not found", { status: 404 });
         }
+        const { data: profile } = await adminClient
+          .from("profiles")
+          .select("status")
+          .eq("id", userId)
+          .maybeSingle();
+        if (profile?.status !== "active") return new Response("Account disabled", { status: 403 });
         if (software.pricing_type === "paid") {
           const { data: purchase } = await adminClient
             .from("purchases")
@@ -98,11 +105,25 @@ export const Route = createFileRoute("/api/software/download")({
           if (!purchase) return new Response("Purchase required", { status: 403 });
         }
 
-        const savedUrl = new URL(version.file_path);
-        if (savedUrl.hostname !== "github.com") {
-          return new Response("Invalid GitHub URL", { status: 400 });
+        let remoteUrl: URL | null = null;
+        if (version.file_path.startsWith("http")) {
+          const savedUrl = new URL(version.file_path);
+          if (savedUrl.hostname !== "github.com")
+            return new Response("Invalid GitHub URL", { status: 400 });
+          remoteUrl = await resolveGitHubAsset(savedUrl);
+        } else {
+          const [bucket, ...parts] = version.file_path.split("/");
+          const storagePath = parts.join("/");
+          if (bucket !== "software-files" || !storagePath || storagePath.includes("..")) {
+            return new Response("Invalid storage reference", { status: 400 });
+          }
+          const { data: signed, error: signedError } = await adminClient.storage
+            .from(bucket)
+            .createSignedUrl(storagePath, 120);
+          if (!signed?.signedUrl || signedError)
+            return new Response("Download unavailable", { status: 404 });
+          remoteUrl = new URL(signed.signedUrl);
         }
-        const remoteUrl = await resolveGitHubAsset(savedUrl);
         if (!remoteUrl) {
           return new Response("No installer asset was found in this GitHub Release.", {
             status: 404,
@@ -116,6 +137,14 @@ export const Route = createFileRoute("/api/software/download")({
             status: 502,
           });
         }
+
+        const { error: downloadRecordError } = await adminClient.from("downloads").insert({
+          software_id: version.software_id,
+          user_id: userId,
+          version_id: versionId,
+        });
+        if (downloadRecordError)
+          return new Response("Download could not be recorded", { status: 500 });
 
         const headers = new Headers();
         headers.set(

@@ -103,17 +103,33 @@ function Section({
 }
 
 function Home() {
-  const { data: all, isLoading } = usePublishedSoftware();
+  const { data: featuredData, isLoading: featuredLoading } = usePublishedSoftware({
+    page: 1,
+    pageSize: 3,
+    featured: true,
+    sort: "newest",
+  });
+  const { data: popularData, isLoading: popularLoading } = usePublishedSoftware({
+    page: 1,
+    pageSize: 3,
+    sort: "downloads",
+  });
+  const { data: recentData, isLoading: recentLoading } = usePublishedSoftware({
+    page: 1,
+    pageSize: 3,
+    sort: "newest",
+  });
 
   useEffect(() => {
     trackEvent("page_view", { metadata: { path: "/" } });
   }, []);
 
-  const featured = (all ?? []).filter((item) => item.featured).slice(0, 3);
-  const popular = [...(all ?? [])].sort((a, b) => b.download_count - a.download_count).slice(0, 3);
-  const recent = [...(all ?? [])]
-    .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
-    .slice(0, 3);
+  const featured = featuredData?.items ?? [];
+  const popular = popularData?.items ?? [];
+  const recent = recentData?.items ?? [];
+  const featuredLoadingState = featuredLoading;
+  const popularLoadingState = popularLoading;
+  const recentLoadingState = recentLoading;
 
   const skeletons = (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -199,7 +215,7 @@ function Home() {
           </Button>
         }
       >
-        {isLoading ? (
+        {featuredLoadingState ? (
           skeletons
         ) : featured.length ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -238,7 +254,7 @@ function Home() {
       </section>
 
       <Section title="Popular software" description="The most downloaded applications right now.">
-        {isLoading ? (
+        {popularLoadingState ? (
           skeletons
         ) : popular.length ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -252,7 +268,7 @@ function Home() {
       </Section>
 
       <Section title="Recently added" description="The newest releases published on CodeMarket.">
-        {isLoading ? (
+        {recentLoadingState ? (
           skeletons
         ) : recent.length ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -11,6 +11,7 @@ const DEFAULTS: SiteSettings = {
   site_description: "Discover. Download. Build.",
   contact_email: "hello@codemarket.app",
   whatsapp_number: "",
+  payment_methods: "both",
   currency: "USD",
   facebook_url: "",
   twitter_url: "",
