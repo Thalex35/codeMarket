@@ -2,15 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
-  CalendarCheck2,
-  CheckCircle2,
-  Clock3,
-  Mail,
+  Heart,
+  MessageSquareText,
+  ShoppingBag,
   ShieldCheck,
-  Trash2,
   UserRound,
-  Users,
-  Volume2,
 } from "lucide-react";
 
 import { EmptyState } from "@/components/EmptyState";
@@ -42,19 +38,24 @@ function AdminUserDetail() {
       const [
         { data: profile, error: profileError },
         { data: roleRow },
-        { data: downloads },
         { data: likes },
         { data: purchases },
+        { data: messages },
       ] = await Promise.all([
         supabase.from("profiles").select("id, full_name, email, status, created_at").eq("id", id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", id).maybeSingle(),
-        supabase.from("downloads").select("id").eq("user_id", id),
-        supabase.from("likes").select("id").eq("user_id", id),
+        supabase.from("likes").select("id, software_id, software:software_id (name)").eq("user_id", id),
         supabase
           .from("purchases")
           .select("id, amount, currency, status, created_at, software:software_id (name)")
           .eq("user_id", id)
           .order("created_at", { ascending: false }),
+        supabase
+          .from("messages")
+          .select("id, content, created_at, sender:sender_id (full_name, email)")
+          .or(`sender_id.eq.${id},recipient_id.eq.${id}`)
+          .order("created_at", { ascending: false })
+          .limit(10),
       ]);
 
       if (profileError) throw profileError;
@@ -65,9 +66,9 @@ function AdminUserDetail() {
       return {
         profile,
         role: roleRow?.role ?? "user",
-        downloads: downloads?.length ?? 0,
-        likes: likes?.length ?? 0,
+        likes: likes ?? [],
         purchases: purchases ?? [],
+        messages: messages ?? [],
       };
     },
   });
@@ -88,13 +89,10 @@ function AdminUserDetail() {
     );
   }
 
-  const { profile, role, downloads, likes, purchases } = data;
-
-  const connectionText = "Last connection 6h ago";
-  const onboardingText = profile.status === "active" ? "Completed" : "Not completed";
+  const { profile, role, likes, purchases, messages } = data;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
       <Button asChild variant="ghost" className="mb-6 h-auto px-0 text-base text-foreground hover:bg-transparent">
         <Link to="/admin/users" className="inline-flex items-center gap-2">
           <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -102,173 +100,126 @@ function AdminUserDetail() {
         </Link>
       </Button>
 
-      <div className="mb-6 space-y-2">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-muted-foreground">
-          Administration
-        </p>
-        <h1 className="font-display text-4xl font-bold tracking-tight leading-none text-foreground">
-          {profile.full_name ?? "Unnamed user"}
-        </h1>
-        <p className="text-lg text-muted-foreground">{profile.email}</p>
-      </div>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            Administration
+          </p>
+          <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-foreground">
+            {profile.full_name ?? "Unnamed user"}
+          </h1>
+          <p className="mt-2 text-lg text-muted-foreground">{profile.email}</p>
+        </div>
 
-      <div className="mb-8 flex flex-wrap items-center gap-3">
-        <Badge
-          className={
-            profile.status === "active"
-              ? "border-success/20 bg-success/10 text-success"
-              : "border-muted-foreground/20 bg-muted/30 text-foreground"
-          }
-          variant={profile.status === "active" ? "outline" : "secondary"}
-        >
-          {profile.status === "active" ? "approved" : "suspended"}
-        </Badge>
-
-        <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="h-2.5 w-2.5 rounded-full bg-success" aria-hidden />
-          Last connection {"6h ago"}
-        </span>
-
-        <div className="ml-auto flex flex-wrap gap-3">
-          <Button type="button" variant="outline" className="gap-2">
-            <ShieldCheck className="h-4 w-4" aria-hidden />
-            Suspend user
-          </Button>
-          <Button type="button" variant="destructive" className="gap-2">
-            <Trash2 className="h-4 w-4" aria-hidden />
-            Delete user
-          </Button>
+        <div className="flex items-center gap-2">
+          <Badge
+            className={
+              profile.status === "active"
+                ? "border-success/20 bg-success/10 text-success"
+                : "border-muted-foreground/20 bg-muted/30 text-foreground"
+            }
+            variant={profile.status === "active" ? "outline" : "secondary"}
+          >
+            {profile.status === "active" ? "Active" : "Disabled"}
+          </Badge>
+          <Badge
+            variant={role === "admin" ? "default" : "outline"}
+            className={role === "admin" ? "bg-primary/90" : ""}
+          >
+            <ShieldCheck className="mr-1 h-3 w-3" aria-hidden />
+            {role === "admin" ? "Admin" : "User"}
+          </Badge>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="overflow-hidden rounded-2xl border bg-card shadow-(--shadow-card)">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <section className="overflow-hidden rounded-2xl border bg-card shadow-(--shadow-card) lg:col-span-2">
           <div className="border-b bg-muted/20 px-5 py-4">
-            <h2 className="text-2xl font-bold tracking-tight">Account information</h2>
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="h-4 w-4" aria-hidden />
+              <h2 className="text-xl font-bold tracking-tight">Purchase history</h2>
+            </div>
           </div>
 
-          <div className="p-5">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Mail className="h-4 w-4" aria-hidden />
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Email</p>
-                  <p className="mt-1 font-medium text-foreground">{profile.email}</p>
-                </div>
+          <div className="p-4">
+            {!purchases.length ? (
+              <p className="text-sm text-muted-foreground">No purchases yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {purchases.map((purchase) => {
+                  const software = purchase.software as unknown as { name: string } | null;
+                  return (
+                    <div
+                      key={purchase.id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/20 p-3"
+                    >
+                      <div>
+                        <p className="font-medium text-foreground">{software?.name ?? "Software"}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDate(purchase.created_at)} · {purchase.status}
+                        </p>
+                      </div>
+                      <Badge variant={purchase.status === "paid" ? "default" : "secondary"}>
+                        {purchase.status}
+                      </Badge>
+                    </div>
+                  );
+                })}
               </div>
-
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <CalendarCheck2 className="h-4 w-4" aria-hidden />
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Registered</p>
-                  <p className="mt-1 font-medium text-foreground">{formatDate(profile.created_at)}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Clock3 className="h-4 w-4" aria-hidden />
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Last connection</p>
-                  <p className="mt-1 font-medium text-foreground">{connectionText}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <CheckCircle2 className="h-4 w-4" aria-hidden />
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Approved</p>
-                  <p className="mt-1 font-medium text-foreground">{profile.status === "active" ? "Approved" : "Pending"}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 text-sm text-muted-foreground sm:col-span-2">
-                <Volume2 className="h-4 w-4" aria-hidden />
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Onboarding</p>
-                  <p className="mt-1 font-medium text-foreground">{onboardingText}</p>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </section>
 
         <section className="overflow-hidden rounded-2xl border bg-card shadow-(--shadow-card)">
           <div className="border-b bg-muted/20 px-5 py-4">
-            <h2 className="text-2xl font-bold tracking-tight">Workspace usage</h2>
-          </div>
-
-          <div className="p-5 space-y-4 text-sm">
-            <div className="flex items-center justify-between gap-3 text-muted-foreground">
-              <div className="flex items-center gap-3">
-                <Users className="h-4 w-4" aria-hidden />
-                <span>Students</span>
-              </div>
-              <span className="font-medium text-foreground">{downloads}/100</span>
-            </div>
-            <div className="h-2 rounded-full bg-muted">
-              <div
-                className="h-2 rounded-full bg-primary"
-                style={{ width: `${Math.min((downloads / 100) * 100, 100)}%` }}
-              />
-            </div>
-
-            <div className="flex items-center justify-between gap-3 text-muted-foreground">
-              <div className="flex items-center gap-3">
-                <CalendarCheck2 className="h-4 w-4" aria-hidden />
-                <span>Classes</span>
-              </div>
-              <span className="font-medium text-foreground">{likes}/20</span>
-            </div>
-            <div className="h-2 rounded-full bg-muted">
-              <div
-                className="h-2 rounded-full bg-primary"
-                style={{ width: `${Math.min((likes / 20) * 100, 100)}%` }}
-              />
-            </div>
-
-            <div className="flex items-center justify-between gap-3 text-muted-foreground">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="h-4 w-4" aria-hidden />
-                <span>Storage used</span>
-              </div>
-              <span className="font-medium text-foreground">0.00 GB of 1 GB</span>
+            <div className="flex items-center gap-2">
+              <Heart className="h-4 w-4" aria-hidden />
+              <h2 className="text-xl font-bold tracking-tight">Liked software</h2>
             </div>
           </div>
-        </section>
-      </div>
 
-      <div className="mt-8 rounded-2xl border bg-card p-5 shadow-(--shadow-card)">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="text-2xl font-bold tracking-tight">Purchase history</h2>
-          <Badge variant="secondary">{purchases.length} total</Badge>
-        </div>
-
-        {!purchases.length ? (
-          <p className="text-sm text-muted-foreground">This user has no recorded purchases yet.</p>
-        ) : (
-          <div className="space-y-3">
-            {purchases.map((purchase) => {
-              const software = purchase.software as unknown as { name: string } | null;
-              return (
-                <div
-                  key={purchase.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/20 p-4"
-                >
-                  <div>
-                    <p className="font-medium text-foreground">{software?.name ?? "Software"}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(purchase.created_at)} · {purchase.status}
-                    </p>
+          <div className="p-4">
+            {!likes.length ? (
+              <p className="text-sm text-muted-foreground">No liked software.</p>
+            ) : (
+              <div className="space-y-2">
+                {(likes as Array<{ id: string; software: { name: string } | null }>).map((like) => (
+                  <div key={like.id} className="rounded-xl border bg-muted/20 p-3 text-sm">
+                    {like.software?.name ?? "Software"}
                   </div>
-                  <Badge variant={purchase.status === "paid" ? "default" : "secondary"}>
-                    {purchase.status}
-                  </Badge>
-                </div>
-              );
-            })}
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </section>
       </div>
+
+      <section className="mt-6 overflow-hidden rounded-2xl border bg-card shadow-(--shadow-card)">
+        <div className="border-b bg-muted/20 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <MessageSquareText className="h-4 w-4" aria-hidden />
+            <h2 className="text-xl font-bold tracking-tight">Messages</h2>
+          </div>
+        </div>
+
+        <div className="p-4">
+          {!messages.length ? (
+            <p className="text-sm text-muted-foreground">No messages.</p>
+          ) : (
+            <div className="space-y-3">
+              {(messages as Array<{ id: string; content: string; created_at: string; sender: { full_name?: string; email?: string } | null }>).map((message) => (
+                <div key={message.id} className="rounded-xl border bg-muted/20 p-3">
+                  <div className="mb-1 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                    <span>{message.sender?.full_name ?? message.sender?.email ?? "User"}</span>
+                    <span>{formatDate(message.created_at)}</span>
+                  </div>
+                  <p className="text-sm text-foreground">{message.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
