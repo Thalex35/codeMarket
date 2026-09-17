@@ -231,6 +231,20 @@
   box-shadow: none;
 }
 
+.admin-shell.dark,
+.admin-shell.dark .admin-content {
+  background-color: #000000;
+}
+
+.admin-shell.dark .bg-card {
+  color: #ffffff;
+  border-color: #374151;
+}
+
+.admin-shell.dark .text-muted-foreground {
+  color: #d1d5db;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
