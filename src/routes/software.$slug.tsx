@@ -5,6 +5,7 @@ import {
   Calendar,
   Check,
   Download,
+  ExternalLink,
   HardDrive,
   Heart,
   Loader2,
@@ -182,6 +183,8 @@ function SoftwareDetail() {
   }
 
   const isPaid = software.pricing_type === "paid";
+  const isWeb = software.platform === "Web";
+  const webUrl = currentVersion?.file_path?.trim();
   const downloadBlockedOnMobile = isMobile;
 
   function requireAuth() {
@@ -383,10 +386,10 @@ function SoftwareDetail() {
               <Badge variant="outline" className="gap-1">
                 <Monitor className="h-3 w-3" aria-hidden /> {software.platform}
               </Badge>
-              {currentVersion ? <Badge variant="outline">v{currentVersion.version}</Badge> : null}
-              <Badge variant={isPaid ? "default" : "secondary"}>
+              {!isWeb && currentVersion ? <Badge variant="outline">v{currentVersion.version}</Badge> : null}
+              {!isWeb ? <Badge variant={isPaid ? "default" : "secondary"}>
                 {isPaid ? formatPrice(software.price, software.currency) : "Free"}
-              </Badge>
+              </Badge> : null}
             </div>
 
             <h1 className="mt-4 font-display text-3xl font-bold sm:text-4xl">{software.name}</h1>
@@ -403,7 +406,14 @@ function SoftwareDetail() {
             </div>
 
             <div className="mt-7 flex flex-wrap gap-3">
-              {isPaid && !paidAccess?.paid ? (
+              {isWeb && webUrl ? (
+                <Button size="lg" asChild>
+                  <a href={webUrl} target="_blank" rel="noreferrer">
+                    <ExternalLink className="mr-2 h-4 w-4" aria-hidden />
+                    View
+                  </a>
+                </Button>
+              ) : isPaid && !paidAccess?.paid ? (
                 <Button
                   size="lg"
                   disabled={busy}
@@ -444,7 +454,7 @@ function SoftwareDetail() {
               </Button>
             </div>
 
-            {downloadBlockedOnMobile ? (
+            {!isWeb && downloadBlockedOnMobile ? (
               <div className="mt-4 flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning-foreground">
                 <Smartphone className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
                 <div>
@@ -457,7 +467,7 @@ function SoftwareDetail() {
               </div>
             ) : null}
 
-            {downloadProgress !== null ? (
+            {!isWeb && downloadProgress !== null ? (
               <ProgressPanel
                 label="Downloading software"
                 progress={downloadProgress}
@@ -469,7 +479,7 @@ function SoftwareDetail() {
               />
             ) : null}
 
-            {isPaid && paidAccess?.pending && !paidAccess.paid ? (
+            {!isWeb && isPaid && paidAccess?.pending && !paidAccess.paid ? (
               <p className="mt-4 rounded-lg bg-secondary p-3 text-sm text-muted-foreground">
                 Your purchase request is pending confirmation. You'll get download access as soon as
                 the payment is confirmed.
@@ -534,7 +544,7 @@ function SoftwareDetail() {
             </section>
           ) : null}
 
-          {versions.length > 1 ? (
+          {!isWeb && versions.length > 1 ? (
             <section>
               <h2 className="font-display text-xl font-semibold">Version history</h2>
               <ul className="mt-4 space-y-3">
@@ -564,7 +574,7 @@ function SoftwareDetail() {
         </div>
 
         <aside className="space-y-6">
-          <div className="rounded-xl border bg-card p-5">
+          {!isWeb ? <div className="rounded-xl border bg-card p-5">
             <h2 className="font-display text-base font-semibold">Current version</h2>
             <dl className="mt-4 space-y-3 text-sm">
               <div className="flex items-center justify-between">
@@ -591,7 +601,7 @@ function SoftwareDetail() {
                 {currentVersion.release_notes}
               </p>
             ) : null}
-          </div>
+          </div> : null}
 
           <div className="rounded-xl border bg-card p-5">
             <h2 className="font-display text-base font-semibold">Requirements</h2>

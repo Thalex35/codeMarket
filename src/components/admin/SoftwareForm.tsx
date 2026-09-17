@@ -76,6 +76,7 @@ export function SoftwareForm({
     featured: initial?.featured ?? false,
     published: initial?.published ?? false,
   });
+  const isWeb = form.platform === "Web";
   const [features, setFeatures] = useState((initial?.features ?? []).join("\n"));
   const [requirements, setRequirements] = useState(
     Object.entries(initial?.requirements ?? {})
@@ -232,11 +233,11 @@ export function SoftwareForm({
       toast.error("Please fix the highlighted fields.");
       return;
     }
-    if (form.pricing_type === "paid" && price <= 0) {
+    if (!isWeb && form.pricing_type === "paid" && price <= 0) {
       setErrors({ price: "Paid software needs a price above zero" });
       return;
     }
-    if (form.platform === "Web") {
+    if (isWeb) {
       try {
         const webUrl = new URL(version.file_path.trim());
         if (!/^https?:$/.test(webUrl.protocol)) throw new Error();
@@ -255,8 +256,8 @@ export function SoftwareForm({
         description: form.description.trim(),
         category: form.category,
         platform: form.platform,
-        pricing_type: form.pricing_type,
-        price,
+        pricing_type: isWeb ? "free" : form.pricing_type,
+        price: isWeb ? 0 : price,
         currency: form.currency,
         cover_url: form.cover_url || null,
         features: features
@@ -283,13 +284,13 @@ export function SoftwareForm({
         if (error) throw error;
         softwareId = data.id;
 
-        if (version.version) {
+        if (isWeb || version.version) {
           await supabase.from("software_versions").insert({
             software_id: softwareId,
-            version: version.version,
-            release_date: version.release_date,
-            release_notes: version.release_notes || null,
-            file_size: version.file_size || null,
+            version: isWeb ? "web" : version.version,
+            release_date: isWeb ? new Date().toISOString().slice(0, 10) : version.release_date,
+            release_notes: isWeb ? null : version.release_notes || null,
+            file_size: isWeb ? null : version.file_size || null,
             file_path: version.file_path || null,
             is_current: true,
           });
@@ -424,7 +425,7 @@ export function SoftwareForm({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-xl border bg-card p-5">
+      {!isWeb ? <section className="space-y-4 rounded-xl border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Pricing</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
@@ -439,16 +440,16 @@ export function SoftwareForm({
             <div className="space-y-2"><Label htmlFor="currency">Currency</Label><Input id="currency" maxLength={3} value={form.currency} onChange={(event) => setForm((prev) => ({ ...prev, currency: event.target.value.toUpperCase() }))} /></div>
           </> : null}
         </div>
-      </section>
+      </section> : null}
 
       {!editing ? <section className="space-y-4 rounded-xl border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">First version</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        {!isWeb ? <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2"><Label htmlFor="version">Version</Label><Input id="version" value={version.version} onChange={(event) => setVersion((prev) => ({ ...prev, version: event.target.value }))} /></div>
           <div className="space-y-2"><Label htmlFor="release-date">Release date</Label><Input id="release-date" type="date" value={version.release_date} onChange={(event) => setVersion((prev) => ({ ...prev, release_date: event.target.value }))} /></div>
           <div className="space-y-2"><Label htmlFor="file-size">File size</Label><Input id="file-size" value={version.file_size} placeholder="e.g. 48 MB" onChange={(event) => setVersion((prev) => ({ ...prev, file_size: event.target.value }))} /></div>
-        </div>
-        <div className="space-y-2"><Label htmlFor="notes">Release notes</Label><Textarea id="notes" rows={3} value={version.release_notes} onChange={(event) => setVersion((prev) => ({ ...prev, release_notes: event.target.value }))} /></div>
+        </div> : null}
+        {!isWeb ? <div className="space-y-2"><Label htmlFor="notes">Release notes</Label><Textarea id="notes" rows={3} value={version.release_notes} onChange={(event) => setVersion((prev) => ({ ...prev, release_notes: event.target.value }))} /></div> : null}
         <div className="space-y-2">
           {form.platform === "Web" ? <>
             <Label htmlFor="web-url">Web URL</Label>
