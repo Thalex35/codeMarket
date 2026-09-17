@@ -5,6 +5,7 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Circle, ShieldCheck, Users, Wifi } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,8 +37,15 @@ function AdminUsers() {
   const { user, onlineUserIds, presenceStatus } = useAuth();
   const protectedAdminEmail = "admin@user.dev";
 
+  useEffect(() => {
+    void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+  }, [onlineUserIds, queryClient]);
+
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users"],
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    refetchInterval: 10_000,
     queryFn: async () => {
       const [
         { data: profiles, error },
