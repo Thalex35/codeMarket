@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   BarChart3,
   Download,
@@ -13,6 +13,8 @@ import {
   PlusCircle,
   Settings,
   ShoppingBag,
+  Moon,
+  Sun,
   Users,
   Wifi,
 } from "lucide-react";
@@ -106,7 +108,20 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [darkTheme, setDarkTheme] = useState(true);
   const { user, isAdmin, isActive, loading, onlineUserIds, presenceStatus } = useAuth();
+
+  useEffect(() => {
+    setDarkTheme(window.localStorage.getItem("codemarket-admin-theme") !== "light");
+  }, []);
+
+  function toggleTheme() {
+    setDarkTheme((current) => {
+      const next = !current;
+      window.localStorage.setItem("codemarket-admin-theme", next ? "dark" : "light");
+      return next;
+    });
+  }
 
   if (loading || !user || !isAdmin || !isActive) {
     return null;
@@ -120,7 +135,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="admin-shell dark flex min-h-screen w-full bg-background text-foreground">
+    <div className={`admin-shell ${darkTheme ? "dark" : "light"} flex min-h-screen w-full bg-background text-foreground`}>
       <aside className="admin-sidebar hidden w-72 shrink-0 flex-col border-r lg:flex">
         <div className="flex h-20 items-center border-b border-sidebar-border px-6">
           <Logo inverted />
@@ -180,6 +195,17 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             </SheetContent>
           </Sheet>
           <Logo />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="ml-auto"
+            onClick={toggleTheme}
+            aria-label={darkTheme ? "Switch to light theme" : "Switch to dark theme"}
+            title={darkTheme ? "Switch to light theme" : "Switch to dark theme"}
+          >
+            {darkTheme ? <Sun className="h-4 w-4" aria-hidden /> : <Moon className="h-4 w-4" aria-hidden />}
+          </Button>
         </header>
 
         <header className="hidden h-20 items-center justify-between border-b bg-card px-8 lg:flex">
@@ -189,9 +215,21 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             </p>
             <p className="mt-1 text-sm text-muted-foreground">Run CodeMarket with clarity.</p>
           </div>
-          <div className="flex items-center gap-2 rounded-full border bg-background px-3 py-2 text-xs font-semibold text-muted-foreground">
-            <Wifi className="h-3.5 w-3.5 text-success" aria-hidden />
-            {presenceStatus === "connected" ? "Realtime connected" : "Realtime reconnecting"}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 rounded-full border bg-background px-3 py-2 text-xs font-semibold text-muted-foreground">
+              <Wifi className="h-3.5 w-3.5 text-success" aria-hidden />
+              {presenceStatus === "connected" ? "Realtime connected" : "Realtime reconnecting"}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label={darkTheme ? "Switch to light theme" : "Switch to dark theme"}
+              title={darkTheme ? "Switch to light theme" : "Switch to dark theme"}
+            >
+              {darkTheme ? <Sun className="h-4 w-4" aria-hidden /> : <Moon className="h-4 w-4" aria-hidden />}
+            </Button>
           </div>
         </header>
         <main className="admin-content min-w-0 flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
