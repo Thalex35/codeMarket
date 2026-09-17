@@ -36,10 +36,6 @@ function AdminUsers() {
   const { user, onlineUserIds, presenceStatus } = useAuth();
   const protectedAdminEmail = "admin@user.dev";
 
-  if (location.pathname !== "/admin/users") {
-    return <Outlet />;
-  }
-
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
@@ -84,6 +80,10 @@ function AdminUsers() {
       }));
     },
   });
+
+  if (location.pathname !== "/admin/users") {
+    return <Outlet />;
+  }
 
   async function setStatus(id: string, status: "active" | "disabled") {
     const { error } = await supabase.from("profiles").update({ status }).eq("id", id);

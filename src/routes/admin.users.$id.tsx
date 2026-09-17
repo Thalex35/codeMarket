@@ -52,8 +52,8 @@ function AdminUserDetail() {
           .order("created_at", { ascending: false }),
         supabase
           .from("messages")
-          .select("id, content, created_at, sender:sender_id (full_name, email)")
-          .or(`sender_id.eq.${id},recipient_id.eq.${id}`)
+          .select("id, name, email, subject, message, created_at")
+          .eq("user_id", id)
           .order("created_at", { ascending: false })
           .limit(10),
       ]);
@@ -89,7 +89,13 @@ function AdminUserDetail() {
     );
   }
 
-  const { profile, role, likes, purchases, messages } = data;
+  const {
+    profile,
+    role,
+    likes = [],
+    purchases = [],
+    messages = [],
+  } = data;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
@@ -207,13 +213,14 @@ function AdminUserDetail() {
             <p className="text-sm text-muted-foreground">No messages.</p>
           ) : (
             <div className="space-y-3">
-              {(messages as Array<{ id: string; content: string; created_at: string; sender: { full_name?: string; email?: string } | null }>).map((message) => (
+              {(messages as Array<{ id: string; name: string; email: string; subject: string; message: string; created_at: string }>).map((message) => (
                 <div key={message.id} className="rounded-xl border bg-muted/20 p-3">
                   <div className="mb-1 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                    <span>{message.sender?.full_name ?? message.sender?.email ?? "User"}</span>
+                    <span>{message.name} · {message.email}</span>
                     <span>{formatDate(message.created_at)}</span>
                   </div>
-                  <p className="text-sm text-foreground">{message.content}</p>
+                  <p className="font-medium text-foreground">{message.subject}</p>
+                  <p className="mt-1 text-sm text-foreground">{message.message}</p>
                 </div>
               ))}
             </div>
