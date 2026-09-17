@@ -704,7 +704,7 @@ export function SoftwareForm({
           <AppImage
             reference={coverPreviewUrl ?? form.cover_url}
             alt="Cover preview"
-            className="h-24 w-36 rounded-md object-cover"
+            className="h-24 w-36 rounded-md border border-slate-200 bg-white p-2 object-contain shadow-sm"
           />
           <label className="inline-flex">
             <input
@@ -723,7 +723,7 @@ export function SoftwareForm({
             </span>
           </label>
           {uploadedFiles.cover ? (
-            <p className="w-full text-sm font-medium text-emerald-700">
+            <p className="w-full text-sm font-medium text-emerald-700 dark:text-emerald-300">
               Cover uploaded: {uploadedFiles.cover.name} ({formatFileSize(uploadedFiles.cover.size)}
               )
             </p>
@@ -778,7 +778,7 @@ export function SoftwareForm({
               </span>
             </label>
             {uploadedFiles.screenshot ? (
-              <p className="mt-3 text-sm font-medium text-emerald-700">
+              <p className="mt-3 text-sm font-medium text-emerald-700 dark:text-emerald-300">
                 Screenshot uploaded: {uploadedFiles.screenshot.name} (
                 {formatFileSize(uploadedFiles.screenshot.size)})
               </p>
