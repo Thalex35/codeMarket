@@ -1,7 +1,40 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { normalizeStorageReference, parseStorageObjectReference } from "./media";
+import {
+  getUploadAccessToken,
+  normalizeStorageReference,
+  parseStorageObjectReference,
+} from "./media";
+
+test("uses the existing upload session before attempting refresh", async () => {
+  let refreshCalls = 0;
+  const auth = {
+    getSession: async () => ({
+      data: { session: { access_token: "existing-token" } },
+      error: null,
+    }),
+    refreshSession: async () => {
+      refreshCalls += 1;
+      return { data: { session: { access_token: "refreshed-token" } }, error: null };
+    },
+  } as never;
+
+  assert.equal(await getUploadAccessToken(auth), "existing-token");
+  assert.equal(refreshCalls, 0);
+});
+
+test("refreshes only when the upload session has no token", async () => {
+  const auth = {
+    getSession: async () => ({ data: { session: null }, error: null }),
+    refreshSession: async () => ({
+      data: { session: { access_token: "refreshed-token" } },
+      error: null,
+    }),
+  } as never;
+
+  assert.equal(await getUploadAccessToken(auth), "refreshed-token");
+});
 
 test("accepts valid storage references", () => {
   assert.equal(normalizeStorageReference("covers/demo/logo.png"), "covers/demo/logo.png");

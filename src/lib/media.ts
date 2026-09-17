@@ -10,6 +10,19 @@ export type StorageObjectReference = {
 
 export type ProgressCallback = (progress: number) => void;
 
+type UploadAuth = Pick<typeof supabase.auth, "getSession" | "refreshSession">;
+
+export async function getUploadAccessToken(auth: UploadAuth = supabase.auth) {
+  const { data: sessionData, error: sessionError } = await auth.getSession();
+  const existingToken = sessionData.session?.access_token;
+  if (existingToken) return existingToken;
+
+  const { data: refreshedData, error: refreshError } = await auth.refreshSession();
+  const refreshedToken = refreshedData.session?.access_token;
+  if (refreshedToken) return refreshedToken;
+  throw refreshError ?? sessionError ?? new Error("You must be signed in to upload files");
+}
+
 export function normalizeStorageReference(reference: string | null | undefined): string | null {
   if (!reference) return null;
   const trimmed = reference.trim();
@@ -150,10 +163,7 @@ export async function uploadFileWithProgress(
     throw new Error("Invalid storage path");
   }
 
-  const { data, error: sessionError } = await supabase.auth.refreshSession();
-  const accessToken = data.session?.access_token;
-  if (sessionError || !accessToken)
-    throw sessionError ?? new Error("You must be signed in to upload files");
+  const accessToken = await getUploadAccessToken();
 
   const supabaseUrl = import.meta.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"];
   const publishableKey =

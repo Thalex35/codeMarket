@@ -1,5 +1,13 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import type { Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +19,16 @@ export type Profile = {
   avatar_url: string | null;
   status: string;
 };
+
+export function shouldReloadAccountForAuthEvent(
+  event: string,
+  currentUserId: string | undefined,
+  nextUserId: string | undefined,
+) {
+  if (event === "TOKEN_REFRESHED") return false;
+  if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "SIGNED_OUT") return true;
+  return currentUserId !== nextUserId;
+}
 
 type AuthContextValue = {
   session: Session | null;
@@ -38,6 +56,7 @@ const AuthContext = createContext<AuthContextValue>({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
+  const sessionRef = useRef<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isActive, setIsActive] = useState(false);
@@ -81,15 +100,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!active) return;
+      if (event === "TOKEN_REFRESHED") {
+        sessionRef.current = nextSession;
+        setSession(nextSession);
+        return;
+      }
+      if (
+        !shouldReloadAccountForAuthEvent(event, sessionRef.current?.user.id, nextSession?.user.id)
+      ) {
+        sessionRef.current = nextSession;
+        setSession(nextSession);
+        return;
+      }
       setLoading(true);
+      sessionRef.current = nextSession;
       setSession(nextSession);
       void loadAccount(nextSession?.user.id).finally(() => setLoading(false));
     });
 
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
+      sessionRef.current = data.session;
       setSession(data.session);
       void loadAccount(data.session?.user.id).finally(() => setLoading(false));
     });

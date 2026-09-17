@@ -123,7 +123,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
     });
   }
 
-  if (loading || !user || !isAdmin || !isActive) {
+  if (!user || (!loading && (!isAdmin || !isActive))) {
     return null;
   }
 
