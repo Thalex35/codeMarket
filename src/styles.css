@@ -152,7 +152,7 @@
   --border: #e5e7eb;
   --input: #d1d5db;
   --ring: #3b82f6;
-  --sidebar: #0f2744;
+  --sidebar: #000000;
   --sidebar-foreground: #e5e7eb;
   --sidebar-primary: #3b82f6;
   --sidebar-primary-foreground: #ffffff;
@@ -185,7 +185,7 @@
   --border: #374151;
   --input: #374151;
   --ring: #3b82f6;
-  --sidebar: #0a0a0a;
+  --sidebar: #000000;
   --sidebar-foreground: #d1d5db;
   --sidebar-primary: #3b82f6;
   --sidebar-primary-foreground: #ffffff;
@@ -215,6 +215,20 @@
   --accent-foreground: oklch(0.97 0.01 250);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
+}
+
+.admin-shell .bg-sidebar-primary,
+.admin-shell button.bg-primary,
+.admin-shell a.bg-primary {
+  box-shadow: 0 0 10px rgb(59 130 246 / 50%);
+}
+
+.admin-shell .hero-surface {
+  background-image: none;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-card-foreground);
+  box-shadow: none;
 }
 
 @layer base {

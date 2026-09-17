@@ -141,7 +141,7 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="hero-surface relative overflow-hidden rounded-3xl p-6 shadow-[var(--shadow-lift)] sm:p-8">
+      <div className="relative overflow-hidden rounded-xl border bg-card p-6 sm:p-8">
         <div className="relative z-10 max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary-foreground/65">
             Command center
@@ -160,7 +160,6 @@ function AdminDashboard() {
             <span className="text-primary-foreground/55">Realtime presence active</span>
           </div>
         </div>
-        <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full border border-primary-foreground/10 bg-primary-foreground/5" />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
