@@ -130,6 +130,39 @@
     0 2px 4px oklch(0.24 0.06 265 / 0.08), 0 18px 40px -18px oklch(0.24 0.06 265 / 0.3);
 }
 
+.admin-shell {
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #1f2937;
+  --card-foreground: #ffffff;
+  --popover: #1f2937;
+  --popover-foreground: #ffffff;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #374151;
+  --secondary-foreground: #ffffff;
+  --muted: #374151;
+  --muted-foreground: #d1d5db;
+  --accent: #374151;
+  --accent-foreground: #ffffff;
+  --success: #10b981;
+  --success-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #374151;
+  --input: #374151;
+  --ring: #3b82f6;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #d1d5db;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1f2937;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #374151;
+  --sidebar-ring: #3b82f6;
+  --shadow-card: none;
+}
+
 .dark {
   --background: oklch(0.18 0.03 264);
   --foreground: oklch(0.97 0.01 250);

@@ -19,9 +19,9 @@ type ActivityType = "purchase" | "like" | "download";
 type ActivityItem = { id: string; date: string; type: ActivityType; title: string; description: string };
 
 const activityStyles = {
-  purchase: { label: "Purchase", icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
-  like: { label: "Liked", icon: Heart, color: "text-rose-600", bg: "bg-rose-50" },
-  download: { label: "Download", icon: Download, color: "text-emerald-600", bg: "bg-emerald-50" },
+  purchase: { label: "Purchase", icon: ShoppingBag, color: "text-blue-300", bg: "bg-blue-950" },
+  like: { label: "Liked", icon: Heart, color: "text-rose-300", bg: "bg-rose-950" },
+  download: { label: "Download", icon: Download, color: "text-emerald-300", bg: "bg-emerald-950" },
 } as const;
 
 export const Route = createFileRoute("/admin/users/$id")({

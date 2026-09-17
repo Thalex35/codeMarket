@@ -85,7 +85,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                     className={cn(
                       "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                       active
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/20"
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
                         : "text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                     )}
                   >
@@ -120,7 +120,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="admin-shell flex min-h-screen w-full bg-muted/40">
+    <div className="admin-shell dark flex min-h-screen w-full bg-background text-foreground">
       <aside className="admin-sidebar hidden w-72 shrink-0 flex-col border-r lg:flex">
         <div className="flex h-20 items-center border-b border-sidebar-border px-6">
           <Logo inverted />
@@ -129,7 +129,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2 text-xs font-semibold text-sidebar-foreground/70">
             <span
               className={cn(
-                "h-2 w-2 rounded-full shadow-[0_0_0_4px_oklch(0.63_0.14_155_/_0.14)]",
+                "h-2 w-2 rounded-full",
                 presenceStatus === "connected" ? "bg-success" : "bg-warning",
               )}
             />
@@ -182,7 +182,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           <Logo />
         </header>
 
-        <header className="hidden h-20 items-center justify-between border-b bg-card/80 px-8 backdrop-blur lg:flex">
+        <header className="hidden h-20 items-center justify-between border-b bg-card px-8 lg:flex">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
               Control center
