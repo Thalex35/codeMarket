@@ -143,21 +143,21 @@ function AdminDashboard() {
     <div className="space-y-6">
       <div className="relative overflow-hidden rounded-xl border bg-card p-6 sm:p-8">
         <div className="relative z-10 max-w-2xl">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary-foreground/65">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
             Command center
           </p>
           <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
             Welcome back
           </h1>
-          <p className="mt-2 max-w-lg text-sm text-primary-foreground/70 sm:text-base">
+          <p className="mt-2 max-w-lg text-sm text-muted-foreground sm:text-base">
             A live view of your marketplace, its people, and the work moving through it.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
-            <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-2 font-semibold text-primary-foreground">
+            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-2 font-semibold text-foreground">
               <span className="h-2 w-2 rounded-full bg-success" />
               {onlineUserIds.length} users online now
             </span>
-            <span className="text-primary-foreground/55">Realtime presence active</span>
+            <span className="text-muted-foreground">Realtime presence active</span>
           </div>
         </div>
       </div>
