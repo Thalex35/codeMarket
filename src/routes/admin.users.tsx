@@ -1,4 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Circle, ShieldCheck, Users, Wifi } from "lucide-react";
 import { toast } from "sonner";
@@ -27,8 +32,13 @@ export const Route = createFileRoute("/admin/users")({
 function AdminUsers() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, onlineUserIds, presenceStatus } = useAuth();
   const protectedAdminEmail = "admin@user.dev";
+
+  if (location.pathname !== "/admin/users") {
+    return <Outlet />;
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users"],
