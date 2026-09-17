@@ -263,7 +263,7 @@
 }
 
 .admin-shell.dark input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
+  filter: invert(1) brightness(1.25);
   opacity: 0.9;
 }
 
