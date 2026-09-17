@@ -57,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setIsAdmin(false);
     setIsActive(false);
+    await supabase.rpc("ensure_account_profile" as never);
     const [{ data: profileRow }, { data: adminFlag }] = await Promise.all([
       supabase
         .from("profiles")
