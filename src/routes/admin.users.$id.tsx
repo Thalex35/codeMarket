@@ -1,10 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
   Activity, ArrowLeft, Ban, CalendarDays, Check, Clock3, Download, Heart,
   Mail, Package, Plus, Receipt, ShieldCheck, ShoppingBag, Star, StickyNote,
-  Tag, UserRound,
+  Tag, Trash2, UserRound,
 } from "lucide-react";
 
 import { EmptyState } from "@/components/EmptyState";
@@ -44,6 +44,7 @@ function accountAge(createdAt: string) {
 
 function AdminUserDetail() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [newTag, setNewTag] = useState("");
   const [tags, setTags] = useState(["VIP", "Needs Review"]);
@@ -92,6 +93,14 @@ function AdminUserDetail() {
     await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
   }
 
+  async function deleteUser() {
+    if (role === "admin" || !window.confirm(`Delete ${profile.full_name ?? profile.email}? This cannot be undone.`)) return;
+    const { error } = await supabase.from("profiles").delete().eq("id", id);
+    if (error) { setStatusMessage("The user could not be deleted."); return; }
+    await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    await navigate({ to: "/admin/users" });
+  }
+
   function addTag() {
     const value = newTag.trim();
     if (!value || tags.includes(value)) return;
@@ -121,7 +130,7 @@ function AdminUserDetail() {
         </main>
 
         <aside className="space-y-6 lg:sticky lg:top-6">
-          <section className="rounded-xl border bg-card" aria-labelledby="actions-heading"><div className="border-b px-5 py-4"><h2 id="actions-heading" className="font-semibold">Quick actions</h2><p className="mt-1 text-sm text-muted-foreground">Manage this account</p></div><div className="space-y-2 p-4"><Button asChild variant="outline" className="w-full justify-start gap-2"><a href={`mailto:${profile.email}`}><Mail className="h-4 w-4" aria-hidden />Contact user</a></Button><Button type="button" variant={isSuspended ? "default" : "outline"} className="w-full justify-start gap-2" onClick={() => void toggleStatus()}><Ban className="h-4 w-4" aria-hidden />{isSuspended ? "Restore account" : "Suspend account"}</Button><Button asChild variant="outline" className="w-full justify-start gap-2"><Link to="/admin/purchases"><Receipt className="h-4 w-4" aria-hidden />View transactions</Link></Button>{statusMessage ? <p className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground"><Check className="h-3.5 w-3.5 text-success" aria-hidden />{statusMessage}</p> : null}</div></section>
+          <section className="rounded-xl border bg-card" aria-labelledby="actions-heading"><div className="border-b px-5 py-4"><h2 id="actions-heading" className="font-semibold">Quick actions</h2><p className="mt-1 text-sm text-muted-foreground">Manage this account</p></div><div className="space-y-2 p-4"><Button asChild variant="outline" className="w-full justify-start gap-2"><a href={`mailto:${profile.email}`}><Mail className="h-4 w-4" aria-hidden />Contact user</a></Button><Button type="button" variant={isSuspended ? "default" : "outline"} className="w-full justify-start gap-2" onClick={() => void toggleStatus()}><Ban className="h-4 w-4" aria-hidden />{isSuspended ? "Restore account" : "Suspend account"}</Button><Button asChild variant="outline" className="w-full justify-start gap-2"><Link to="/admin/purchases"><Receipt className="h-4 w-4" aria-hidden />View transactions</Link></Button><Button type="button" variant="destructive" disabled={role === "admin"} className="w-full justify-start gap-2" onClick={() => void deleteUser()}><Trash2 className="h-4 w-4" aria-hidden />Delete user</Button>{role === "admin" ? <p className="text-xs text-muted-foreground">Administrator accounts cannot be deleted here.</p> : null}{statusMessage ? <p className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground"><Check className="h-3.5 w-3.5 text-success" aria-hidden />{statusMessage}</p> : null}</div></section>
 
           <section className="rounded-xl border bg-card" aria-labelledby="notes-heading"><div className="border-b px-5 py-4"><div className="flex items-center gap-2"><Tag className="h-4 w-4 text-muted-foreground" aria-hidden /><h2 id="notes-heading" className="font-semibold">Tags & notes</h2></div><p className="mt-1 text-sm text-muted-foreground">Visible to administrators only</p></div><div className="space-y-4 p-4"><div className="flex flex-wrap gap-2">{tags.map((tag) => <Badge key={tag} variant="secondary">{tag}</Badge>)}</div><div className="flex gap-2"><Input value={newTag} onChange={(event) => setNewTag(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") addTag(); }} placeholder="Add a tag" aria-label="New tag" /><Button type="button" size="icon" variant="outline" onClick={addTag} aria-label="Add tag"><Plus className="h-4 w-4" /></Button></div><div><label htmlFor="admin-note" className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><StickyNote className="h-3.5 w-3.5" aria-hidden />Admin note</label><textarea id="admin-note" value={note} onChange={(event) => setNote(event.target.value)} className="min-h-24 w-full resize-y rounded-lg border bg-background px-3 py-2 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring" placeholder="Add a private note" /></div></div></section>
         </aside>
