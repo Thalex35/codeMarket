@@ -257,6 +257,16 @@
   color: #d1d5db;
 }
 
+.admin-shell.dark input[type="date"] {
+  color-scheme: dark;
+  color: #f5f8ff;
+}
+
+.admin-shell.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.9;
+}
+
 .dashboard-hero {
   box-shadow: 0 18px 48px -28px rgb(20 92 190 / 45%);
 }
