@@ -57,6 +57,7 @@ export function parseStorageObjectReference(
  */
 export async function resolveImageUrl(
   reference: string | null | undefined,
+  preferSigned = false,
 ): Promise<string | null> {
   const normalized = normalizeStorageReference(reference);
   if (!normalized)
@@ -64,14 +65,15 @@ export async function resolveImageUrl(
       ? reference
       : null;
   if (normalized.startsWith("http") || normalized.startsWith("/")) return normalized;
-  if (cache.has(normalized)) return cache.get(normalized)!;
+  const cacheKey = preferSigned ? `${normalized}:signed` : normalized;
+  if (cache.has(cacheKey)) return cache.get(cacheKey)!;
 
   const object = parseStorageObjectReference(normalized);
   if (!object) return null;
 
-  if (object.bucket === "covers" || object.bucket === "screenshots") {
+  if (!preferSigned && (object.bucket === "covers" || object.bucket === "screenshots")) {
     const { data } = supabase.storage.from(object.bucket).getPublicUrl(object.path);
-    cache.set(normalized, data.publicUrl);
+    cache.set(cacheKey, data.publicUrl);
     return data.publicUrl;
   }
 
@@ -79,7 +81,7 @@ export async function resolveImageUrl(
     .from(object.bucket)
     .createSignedUrl(object.path, 60 * 60);
   if (error || !data?.signedUrl) return null;
-  cache.set(normalized, data.signedUrl);
+  cache.set(cacheKey, data.signedUrl);
   return data.signedUrl;
 }
 

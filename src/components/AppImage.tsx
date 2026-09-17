@@ -14,10 +14,12 @@ type AppImageProps = {
 export function AppImage({ reference, alt, className, eager }: AppImageProps) {
   const [url, setUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(false);
 
   useEffect(() => {
     let active = true;
     setFailed(false);
+    setUsingFallback(false);
     resolveImageUrl(reference).then((value) => {
       if (active) setUrl(value);
     });
@@ -25,6 +27,20 @@ export function AppImage({ reference, alt, className, eager }: AppImageProps) {
       active = false;
     };
   }, [reference]);
+
+  async function handleImageError() {
+    if (usingFallback) {
+      setFailed(true);
+      return;
+    }
+    const fallback = await resolveImageUrl(reference, true);
+    if (fallback && fallback !== url) {
+      setUsingFallback(true);
+      setUrl(fallback);
+      return;
+    }
+    setFailed(true);
+  }
 
   if (!url || failed) {
     return (
@@ -46,7 +62,7 @@ export function AppImage({ reference, alt, className, eager }: AppImageProps) {
       src={url}
       alt={alt}
       loading={eager ? "eager" : "lazy"}
-      onError={() => setFailed(true)}
+      onError={() => void handleImageError()}
       className={className}
     />
   );
