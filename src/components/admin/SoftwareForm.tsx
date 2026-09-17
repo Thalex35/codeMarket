@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { CATEGORIES, PLATFORMS, slugify, type Software } from "@/lib/catalog";
+import { CATEGORIES, PLATFORMS, slugify, type Software, type SoftwareVersion } from "@/lib/catalog";
 import { uploadFileWithProgress } from "@/lib/media";
 
 const MAX_IMAGE = 5 * 1024 * 1024;
@@ -54,9 +54,11 @@ function formatFileSize(bytes: number) {
 
 export function SoftwareForm({
   initial,
+  initialVersion,
   screenshots: initialScreenshots = [],
 }: {
   initial?: Software;
+  initialVersion?: SoftwareVersion | null;
   screenshots?: Screenshot[];
 }) {
   const navigate = useNavigate();
@@ -84,11 +86,12 @@ export function SoftwareForm({
       .join("\n"),
   );
   const [version, setVersion] = useState({
-    version: "1.0.0",
-    release_date: new Date().toISOString().slice(0, 10),
-    release_notes: "",
-    file_size: "",
-    file_path: "",
+    id: initialVersion?.id,
+    version: initialVersion?.version ?? "1.0.0",
+    release_date: initialVersion?.release_date ?? new Date().toISOString().slice(0, 10),
+    release_notes: initialVersion?.release_notes ?? "",
+    file_size: initialVersion?.file_size ?? "",
+    file_path: initialVersion?.file_path ?? "",
   });
   const [compressInstaller, setCompressInstaller] = useState(false);
   const [installerSize, setInstallerSize] = useState<InstallerSizeInfo | null>(null);
@@ -274,6 +277,22 @@ export function SoftwareForm({
       if (editing) {
         const { error } = await supabase.from("software").update(payload).eq("id", softwareId!);
         if (error) throw error;
+        if (isWeb && version.id) {
+          const { error: versionError } = await supabase
+            .from("software_versions")
+            .update({ file_path: version.file_path.trim() })
+            .eq("id", version.id);
+          if (versionError) throw versionError;
+        } else if (isWeb) {
+          const { error: versionError } = await supabase.from("software_versions").insert({
+            software_id: softwareId,
+            version: "web",
+            release_date: new Date().toISOString().slice(0, 10),
+            file_path: version.file_path.trim(),
+            is_current: true,
+          });
+          if (versionError) throw versionError;
+        }
       } else {
         const { data: userData } = await supabase.auth.getUser();
         const { data, error } = await supabase
@@ -442,7 +461,7 @@ export function SoftwareForm({
         </div>
       </section> : null}
 
-      {!editing ? <section className="space-y-4 rounded-xl border bg-card p-5">
+      {!editing || isWeb ? <section className="space-y-4 rounded-xl border bg-card p-5">
         <h2 className="font-display text-lg font-semibold">First version</h2>
         {!isWeb ? <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2"><Label htmlFor="version">Version</Label><Input id="version" value={version.version} onChange={(event) => setVersion((prev) => ({ ...prev, version: event.target.value }))} /></div>

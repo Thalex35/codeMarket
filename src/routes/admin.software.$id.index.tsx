@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import type { Software } from "@/lib/catalog";
+import type { Software, SoftwareVersion } from "@/lib/catalog";
 
 export const Route = createFileRoute("/admin/software/$id/")({
   head: () => ({
@@ -31,17 +31,24 @@ function EditSoftware() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-software-detail", id],
     queryFn: async () => {
-      const [{ data: software, error }, { data: shots }] = await Promise.all([
+      const [{ data: software, error }, { data: shots }, { data: version }] = await Promise.all([
         supabase.from("software").select("*").eq("id", id).maybeSingle(),
         supabase
           .from("software_screenshots")
           .select("id, image_url, caption")
           .eq("software_id", id)
           .order("sort_order", { ascending: true }),
+        supabase
+          .from("software_versions")
+          .select("*")
+          .eq("software_id", id)
+          .eq("is_current", true)
+          .maybeSingle(),
       ]);
       if (error) throw error;
       return {
         software: (software as unknown as Software) ?? null,
+        version: (version as unknown as SoftwareVersion) ?? null,
         screenshots: (shots ?? []).map((shot) => ({
           id: shot.id,
           image_url: shot.image_url,
@@ -81,7 +88,11 @@ function EditSoftware() {
           </Link>
         </Button>
       </div>
-      <SoftwareForm initial={data.software} screenshots={data.screenshots} />
+      <SoftwareForm
+        initial={data.software}
+        initialVersion={data.version}
+        screenshots={data.screenshots}
+      />
     </div>
   );
 }

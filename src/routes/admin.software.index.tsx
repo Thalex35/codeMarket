@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Package, PlusCircle } from "lucide-react";
+import { Package, PlusCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppImage } from "@/components/AppImage";
@@ -79,6 +79,17 @@ function AdminSoftwareList() {
     }
     await queryClient.invalidateQueries({ queryKey: ["admin-software"] });
     toast.success(message);
+  }
+
+  async function deleteSoftware(item: Software) {
+    if (!window.confirm(`Delete "${item.name}" permanently? This cannot be undone.`)) return;
+    const { error } = await supabase.from("software").delete().eq("id", item.id);
+    if (error) {
+      toast.error("The software could not be deleted. Please try again.");
+      return;
+    }
+    await queryClient.invalidateQueries({ queryKey: ["admin-software"] });
+    toast.success("Software permanently deleted.");
   }
 
   return (
@@ -227,6 +238,15 @@ function AdminSoftwareList() {
                   }
                 >
                   {item.archived ? "Restore" : "Archive"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => void deleteSoftware(item)}
+                  aria-label={`Delete ${item.name}`}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" aria-hidden />
+                  Delete
                 </Button>
               </div>
             </div>
