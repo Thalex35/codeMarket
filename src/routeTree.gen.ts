@@ -34,6 +34,7 @@ import { Route as SoftwareIndexRouteImport } from './routes/software.index'
 import { Route as SoftwareSlugRouteImport } from './routes/software.$slug'
 import { Route as AdminSoftwareIndexRouteImport } from './routes/admin.software.index'
 import { Route as AdminSoftwareNewRouteImport } from './routes/admin.software.new'
+import { Route as AdminUsersIdRouteImport } from './routes/admin.users.$id'
 import { Route as ApiSoftwareDownloadRouteImport } from './routes/api.software.download'
 import { Route as AdminSoftwareIdIndexRouteImport } from './routes/admin.software.$id.index'
 import { Route as AdminSoftwareIdVersionsRouteImport } from './routes/admin.software.$id.versions'
@@ -163,6 +164,11 @@ const AdminSoftwareNewRoute = AdminSoftwareNewRouteImport.update({
   path: '/software/new',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminUsersIdRoute = AdminUsersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminUsersRoute,
+} as any)
 const ApiSoftwareDownloadRoute = ApiSoftwareDownloadRouteImport.update({
   id: '/api/software/download',
   path: '/api/software/download',
@@ -203,12 +209,13 @@ export interface FileRoutesByFullPath {
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/purchases': typeof AdminPurchasesRoute
   '/admin/settings': typeof AdminSettingsRoute
-  '/admin/users': typeof AdminUsersRoute
+  '/admin/users': typeof AdminUsersRouteWithChildren
   '/payment/complete': typeof PaymentCompleteRoute
   '/software/$slug': typeof SoftwareSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/software/': typeof SoftwareIndexRoute
   '/admin/software/new': typeof AdminSoftwareNewRoute
+  '/admin/users/$id': typeof AdminUsersIdRoute
   '/api/software/download': typeof ApiSoftwareDownloadRoute
   '/admin/software/': typeof AdminSoftwareIndexRoute
   '/admin/software/$id/versions': typeof AdminSoftwareIdVersionsRoute
@@ -232,12 +239,13 @@ export interface FileRoutesByTo {
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/purchases': typeof AdminPurchasesRoute
   '/admin/settings': typeof AdminSettingsRoute
-  '/admin/users': typeof AdminUsersRoute
+  '/admin/users': typeof AdminUsersRouteWithChildren
   '/payment/complete': typeof PaymentCompleteRoute
   '/software/$slug': typeof SoftwareSlugRoute
   '/admin': typeof AdminIndexRoute
   '/software': typeof SoftwareIndexRoute
   '/admin/software/new': typeof AdminSoftwareNewRoute
+  '/admin/users/$id': typeof AdminUsersIdRoute
   '/api/software/download': typeof ApiSoftwareDownloadRoute
   '/admin/software': typeof AdminSoftwareIndexRoute
   '/admin/software/$id/versions': typeof AdminSoftwareIdVersionsRoute
@@ -264,12 +272,13 @@ export interface FileRoutesById {
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/purchases': typeof AdminPurchasesRoute
   '/admin/settings': typeof AdminSettingsRoute
-  '/admin/users': typeof AdminUsersRoute
+  '/admin/users': typeof AdminUsersRouteWithChildren
   '/payment/complete': typeof PaymentCompleteRoute
   '/software/$slug': typeof SoftwareSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/software/': typeof SoftwareIndexRoute
   '/admin/software/new': typeof AdminSoftwareNewRoute
+  '/admin/users/$id': typeof AdminUsersIdRoute
   '/api/software/download': typeof ApiSoftwareDownloadRoute
   '/admin/software/': typeof AdminSoftwareIndexRoute
   '/admin/software/$id/versions': typeof AdminSoftwareIdVersionsRoute
@@ -302,6 +311,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/software/'
     | '/admin/software/new'
+    | '/admin/users/$id'
     | '/api/software/download'
     | '/admin/software/'
     | '/admin/software/$id/versions'
@@ -331,6 +341,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/software'
     | '/admin/software/new'
+    | '/admin/users/$id'
     | '/api/software/download'
     | '/admin/software'
     | '/admin/software/$id/versions'
@@ -362,6 +373,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/software/'
     | '/admin/software/new'
+    | '/admin/users/$id'
     | '/api/software/download'
     | '/admin/software/'
     | '/admin/software/$id/versions'
@@ -561,6 +573,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSoftwareNewRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/users/$id': {
+      id: '/admin/users/$id'
+      path: '/$id'
+      fullPath: '/admin/users/$id'
+      preLoaderRoute: typeof AdminUsersIdRouteImport
+      parentRoute: typeof AdminUsersRoute
+    }
     '/api/software/download': {
       id: '/api/software/download'
       path: '/api/software/download'
@@ -609,6 +628,18 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AdminUsersRouteChildren {
+  AdminUsersIdRoute: typeof AdminUsersIdRoute
+}
+
+const AdminUsersRouteChildren: AdminUsersRouteChildren = {
+  AdminUsersIdRoute: AdminUsersIdRoute,
+}
+
+const AdminUsersRouteWithChildren = AdminUsersRoute._addFileChildren(
+  AdminUsersRouteChildren,
+)
+
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
@@ -617,7 +648,7 @@ interface AdminRouteChildren {
   AdminMessagesRoute: typeof AdminMessagesRoute
   AdminPurchasesRoute: typeof AdminPurchasesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
-  AdminUsersRoute: typeof AdminUsersRoute
+  AdminUsersRoute: typeof AdminUsersRouteWithChildren
   AdminIndexRoute: typeof AdminIndexRoute
   AdminSoftwareNewRoute: typeof AdminSoftwareNewRoute
   AdminSoftwareIndexRoute: typeof AdminSoftwareIndexRoute
@@ -633,7 +664,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminMessagesRoute: AdminMessagesRoute,
   AdminPurchasesRoute: AdminPurchasesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
-  AdminUsersRoute: AdminUsersRoute,
+  AdminUsersRoute: AdminUsersRouteWithChildren,
   AdminIndexRoute: AdminIndexRoute,
   AdminSoftwareNewRoute: AdminSoftwareNewRoute,
   AdminSoftwareIndexRoute: AdminSoftwareIndexRoute,
