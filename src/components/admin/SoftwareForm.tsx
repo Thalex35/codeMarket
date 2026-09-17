@@ -36,7 +36,7 @@ const schema = z.object({
   price: z.number().min(0),
 });
 
-type Screenshot = { id?: string; image_url: string; caption: string };
+type Screenshot = { id?: string; image_url: string; caption: string; preview_url?: string };
 type UploadKind = "cover" | "screenshot" | "installer";
 type InstallerSizeInfo = {
   original: number;
@@ -99,6 +99,7 @@ export function SoftwareForm({
     {},
   );
   const [screenshots, setScreenshots] = useState<Screenshot[]>(initialScreenshots);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState<Record<UploadKind, boolean>>({
@@ -124,6 +125,8 @@ export function SoftwareForm({
   }
 
   async function handleUpload(event: React.ChangeEvent<HTMLInputElement>, kind: UploadKind) {
+    event.preventDefault();
+    event.stopPropagation();
     const file = event.target.files?.[0];
     if (!file) return;
     const isImage = kind !== "installer";
@@ -188,9 +191,19 @@ export function SoftwareForm({
         (progress) => setUploadProgress((prev) => ({ ...prev, [kind]: progress })),
         controller.signal,
       );
-      if (kind === "cover") setForm((prev) => ({ ...prev, cover_url: reference }));
+      const previewUrl = URL.createObjectURL(fileToUpload);
+      if (kind === "cover") {
+        setForm((prev) => ({ ...prev, cover_url: reference }));
+        setCoverPreviewUrl((previous) => {
+          if (previous) URL.revokeObjectURL(previous);
+          return previewUrl;
+        });
+      }
       if (kind === "screenshot")
-        setScreenshots((prev) => [...prev, { image_url: reference, caption: "" }]);
+        setScreenshots((prev) => [
+          ...prev,
+          { image_url: reference, preview_url: previewUrl, caption: "" },
+        ]);
       if (kind === "installer") {
         setVersion((prev) => ({
           ...prev,
@@ -512,7 +525,7 @@ export function SoftwareForm({
         ) : null}
         <div className="flex flex-wrap items-center gap-4">
           <AppImage
-            reference={form.cover_url}
+            reference={coverPreviewUrl ?? form.cover_url}
             alt="Cover preview"
             className="h-24 w-36 rounded-md object-cover"
           />
@@ -546,7 +559,7 @@ export function SoftwareForm({
             {screenshots.map((shot, index) => (
               <div key={shot.image_url} className="relative">
                 <AppImage
-                  reference={shot.image_url}
+                  reference={shot.preview_url ?? shot.image_url}
                   alt={shot.caption || `Screenshot ${index + 1}`}
                   className="h-20 w-32 rounded-md object-cover"
                 />
