@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Software, SoftwareVersion } from "@/lib/catalog";
 
 const SOFTWARE_COLUMNS =
-  "id, owner_id, name, slug, short_description, description, category, platform, pricing_type, price, currency, cover_url, features, requirements, featured, published, archived, download_count, like_count, created_at, updated_at";
+  "id, owner_id, name, slug, short_description, description, category, platform, pricing_type, price, currency, cover_url, features, requirements, featured, published, archived, download_count, view_count, like_count, created_at, updated_at";
 
 export type SoftwareFilters = {
   search?: string;

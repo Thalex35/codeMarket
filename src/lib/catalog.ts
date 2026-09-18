@@ -77,6 +77,7 @@ export type Software = {
   published: boolean;
   archived: boolean;
   download_count: number;
+  view_count: number;
   like_count: number;
   created_at: string;
   updated_at: string;

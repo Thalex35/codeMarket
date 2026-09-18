@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Download, Heart, Monitor } from "lucide-react";
+import { Download, Eye, Heart, Monitor } from "lucide-react";
 
 import { AppImage } from "@/components/AppImage";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { formatCount, formatPrice, type Software } from "@/lib/catalog";
 
 export function SoftwareCard({ software }: { software: Software }) {
   const isPaid = software.pricing_type === "paid";
+  const isWeb = software.platform === "Web";
 
   return (
     <article className="card-elevated hover:card-elevated-hover group flex h-full flex-col overflow-hidden rounded-xl border bg-card">
@@ -51,8 +52,12 @@ export function SoftwareCard({ software }: { software: Software }) {
               <Heart className="h-3.5 w-3.5" aria-hidden /> {formatCount(software.like_count)}
             </span>
             <span className="flex items-center gap-1">
-              <Download className="h-3.5 w-3.5" aria-hidden />{" "}
-              {formatCount(software.download_count)}
+              {isWeb ? (
+                <Eye className="h-3.5 w-3.5" aria-hidden />
+              ) : (
+                <Download className="h-3.5 w-3.5" aria-hidden />
+              )}{" "}
+              {formatCount(isWeb ? software.view_count : software.download_count)}
             </span>
           </span>
           <Button asChild size="sm" variant="secondary">

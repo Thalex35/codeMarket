@@ -262,6 +262,7 @@ export type Database = {
           short_description: string;
           slug: string;
           updated_at: string;
+          view_count: number;
         };
         Insert: {
           archived?: boolean;
@@ -285,6 +286,7 @@ export type Database = {
           short_description?: string;
           slug: string;
           updated_at?: string;
+          view_count?: number;
         };
         Update: {
           archived?: boolean;
@@ -308,6 +310,7 @@ export type Database = {
           short_description?: string;
           slug?: string;
           updated_at?: string;
+          view_count?: number;
         };
         Relationships: [];
       };
