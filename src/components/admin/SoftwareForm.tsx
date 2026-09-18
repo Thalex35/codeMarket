@@ -738,7 +738,7 @@ export function SoftwareForm({
                 <AppImage
                   reference={shot.preview_url ?? shot.image_url}
                   alt={shot.caption || `Screenshot ${index + 1}`}
-                  className="h-20 w-32 rounded-md object-cover"
+                  className="h-20 w-32 rounded-md border border-slate-200 bg-white p-1 object-contain"
                 />
                 <Button
                   type="button"

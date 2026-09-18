@@ -80,7 +80,7 @@ function DownloadsPage() {
                   <AppImage
                     reference={software.cover_url}
                     alt={`${software.name} cover`}
-                    className="h-16 w-24 rounded-md object-cover"
+                    className="h-16 w-24 rounded-md border border-slate-200 bg-white p-1 object-contain"
                   />
                   <div className="min-w-40 flex-1">
                     <p className="font-medium">{software.name}</p>

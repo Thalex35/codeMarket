@@ -176,7 +176,7 @@ function AdminSoftwareList() {
               <AppImage
                 reference={item.cover_url}
                 alt={`${item.name} cover`}
-                className="h-16 w-24 rounded-md object-cover"
+                className="h-16 w-24 rounded-md border border-slate-200 bg-white p-1 object-contain"
               />
               <div className="min-w-48 flex-1">
                 <div className="flex flex-wrap items-center gap-2">

@@ -348,7 +348,7 @@ function SoftwareDetail() {
               reference={software.cover_url}
               alt={`${software.name} cover image`}
               eager
-              className="aspect-16/10 w-full object-cover"
+              className="aspect-16/10 w-full bg-white p-3 object-contain"
             />
           </div>
 
@@ -505,7 +505,7 @@ function SoftwareDetail() {
                 <AppImage
                   reference={screenshots[activeShot]?.image_url}
                   alt={screenshots[activeShot]?.caption ?? `${software.name} screenshot`}
-                  className="aspect-16/10 w-full object-cover"
+                  className="aspect-16/10 w-full bg-white p-3 object-contain"
                 />
               </div>
               <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
@@ -522,7 +522,7 @@ function SoftwareDetail() {
                     <AppImage
                       reference={shot.image_url}
                       alt={shot.caption ?? `${software.name} screenshot ${index + 1}`}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full bg-white p-1 object-contain"
                     />
                   </button>
                 ))}

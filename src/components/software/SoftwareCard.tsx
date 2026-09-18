@@ -15,12 +15,12 @@ export function SoftwareCard({ software }: { software: Software }) {
       <Link
         to="/software/$slug"
         params={{ slug: software.slug }}
-        className="block aspect-[16/10] overflow-hidden bg-secondary"
+        className="block aspect-[16/10] overflow-hidden bg-white"
       >
         <AppImage
           reference={software.cover_url}
           alt={`${software.name} cover`}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.01]"
         />
       </Link>
 
