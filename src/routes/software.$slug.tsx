@@ -5,6 +5,7 @@ import {
   Calendar,
   Check,
   Download,
+  Eye,
   ExternalLink,
   HardDrive,
   Heart,
@@ -148,7 +149,9 @@ function SoftwareDetail() {
   });
 
   useEffect(() => {
-    if (software) trackEvent("software_view", { softwareId: software.id });
+    if (software && software.platform !== "Web") {
+      trackEvent("software_view", { softwareId: software.id });
+    }
   }, [software]);
 
   if (isLoading) {
@@ -386,15 +389,25 @@ function SoftwareDetail() {
                 <Heart className="h-4 w-4" aria-hidden /> {formatCount(software.like_count)} likes
               </span>
               <span className="flex items-center gap-1">
-                <Download className="h-4 w-4" aria-hidden /> {formatCount(software.download_count)}{" "}
-                downloads
+                {isWeb ? (
+                  <Eye className="h-4 w-4" aria-hidden />
+                ) : (
+                  <Download className="h-4 w-4" aria-hidden />
+                )}{" "}
+                {formatCount(isWeb ? software.view_count : software.download_count)}{" "}
+                {isWeb ? "views" : "downloads"}
               </span>
             </div>
 
             <div className="mt-7 flex flex-wrap gap-3">
               {isWeb && webUrl ? (
                 <Button size="lg" asChild>
-                  <a href={webUrl} target="_blank" rel="noreferrer">
+                  <a
+                    href={webUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => trackEvent("software_view", { softwareId: software.id })}
+                  >
                     <ExternalLink className="mr-2 h-4 w-4" aria-hidden />
                     View
                   </a>

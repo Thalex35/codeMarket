@@ -17,6 +17,7 @@ export function trackEvent(
   void fetch("/api/analytics", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    keepalive: true,
     body: JSON.stringify({
       eventType,
       softwareId: options.softwareId ?? null,
