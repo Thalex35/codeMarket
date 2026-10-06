@@ -62,11 +62,17 @@ const GROUPS = [
   },
 ] as const;
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function NavLinks({
+  onNavigate,
+  isMobileDrawer = false,
+}: {
+  onNavigate?: (() => void) | undefined;
+  isMobileDrawer?: boolean;
+}) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
-    <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-6">
+    <nav className={cn(isMobileDrawer && "min-h-0", "flex-1 space-y-6 overflow-y-auto px-3 py-6")}>
       {GROUPS.map((group) => (
         <div key={group.label}>
           <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/45">
@@ -104,6 +110,54 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+function AdminSidebarContents({
+  onlineUserIds,
+  presenceStatus,
+  onNavigate,
+  onSignOut,
+  isMobileDrawer = false,
+}: {
+  onlineUserIds: string[];
+  presenceStatus: string;
+  onNavigate?: (() => void) | undefined;
+  onSignOut: () => void;
+  isMobileDrawer?: boolean;
+}) {
+  return (
+    <>
+      <div className="flex h-20 items-center border-b border-sidebar-border px-6">
+        <Logo inverted />
+      </div>
+      <div className="mx-4 mt-5 rounded-2xl border border-sidebar-border bg-sidebar-accent/60 p-4">
+        <div className="flex items-center gap-2 text-xs font-semibold text-sidebar-foreground/70">
+          <span
+            className={cn(
+              "h-2 w-2 rounded-full",
+              presenceStatus === "connected" ? "bg-success" : "bg-warning",
+            )}
+          />
+          {presenceStatus === "connected" ? "Live operations" : "Connecting presence"}
+        </div>
+        <p className="mt-2 font-display text-2xl font-semibold text-sidebar-foreground">
+          {onlineUserIds.length}
+        </p>
+        <p className="text-xs text-sidebar-foreground/50">users online now</p>
+      </div>
+      <NavLinks onNavigate={onNavigate} isMobileDrawer={isMobileDrawer} />
+      <div className="border-t border-sidebar-border p-4">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          onClick={onSignOut}
+        >
+          <LogOut className="mr-2 h-4 w-4" aria-hidden />
+          Logout
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function AdminLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -133,41 +187,21 @@ export function AdminLayout({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     void navigate({ to: "/auth", replace: true });
   }
+  const signOutAndClose = () => {
+    setOpen(false);
+    void signOut();
+  };
 
   return (
     <div
       className={`admin-shell ${darkTheme ? "dark" : "light"} flex min-h-screen w-full bg-background text-foreground`}
     >
       <aside className="admin-sidebar hidden w-72 shrink-0 flex-col border-r lg:flex">
-        <div className="flex h-20 items-center border-b border-sidebar-border px-6">
-          <Logo inverted />
-        </div>
-        <div className="mx-4 mt-5 rounded-2xl border border-sidebar-border bg-sidebar-accent/60 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-sidebar-foreground/70">
-            <span
-              className={cn(
-                "h-2 w-2 rounded-full",
-                presenceStatus === "connected" ? "bg-success" : "bg-warning",
-              )}
-            />
-            {presenceStatus === "connected" ? "Live operations" : "Connecting presence"}
-          </div>
-          <p className="mt-2 font-display text-2xl font-semibold text-sidebar-foreground">
-            {onlineUserIds.length}
-          </p>
-          <p className="text-xs text-sidebar-foreground/50">users online now</p>
-        </div>
-        <NavLinks />
-        <div className="border-t border-sidebar-border p-4">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-            onClick={() => void signOut()}
-          >
-            <LogOut className="mr-2 h-4 w-4" aria-hidden />
-            Logout
-          </Button>
-        </div>
+        <AdminSidebarContents
+          onlineUserIds={onlineUserIds}
+          presenceStatus={presenceStatus}
+          onSignOut={() => void signOut()}
+        />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -178,22 +212,21 @@ export function AdminLayout({ children }: { children: ReactNode }) {
                 <Menu className="h-5 w-5" aria-hidden />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex w-72 flex-col p-0">
+            <SheetContent
+              side="left"
+              className={cn(
+                "admin-shell admin-sidebar flex w-72 max-w-[calc(100vw-1rem)] min-w-0 flex-col overflow-hidden p-0",
+                darkTheme ? "dark" : "light",
+              )}
+            >
               <SheetTitle className="sr-only">Admin navigation</SheetTitle>
-              <div className="flex h-16 items-center border-b px-5">
-                <Logo />
-              </div>
-              <NavLinks onNavigate={() => setOpen(false)} />
-              <div className="border-t p-3">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => void signOut()}
-                >
-                  <LogOut className="mr-2 h-4 w-4" aria-hidden />
-                  Logout
-                </Button>
-              </div>
+              <AdminSidebarContents
+                onlineUserIds={onlineUserIds}
+                presenceStatus={presenceStatus}
+                onNavigate={() => setOpen(false)}
+                onSignOut={signOutAndClose}
+                isMobileDrawer
+              />
             </SheetContent>
           </Sheet>
           <Logo />
