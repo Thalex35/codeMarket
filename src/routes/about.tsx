@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Code2, Compass, Rocket, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Code2, Compass, Rocket, ShieldCheck } from "lucide-react";
 
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,18 @@ function About() {
             appointments lost in notebooks, stock counted from memory — and turns into a focused
             desktop application that a small team can actually run every day.
           </p>
+          <div className="mt-6">
+            <Button asChild variant="outline">
+              <a
+                href="https://mon-portfolio-theed.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                See My Portfolio
+                <ArrowUpRight aria-hidden />
+              </a>
+            </Button>
+          </div>
         </section>
 
         <section>
